@@ -31,4 +31,3 @@ yarn.lock
 package-lock.json
 run_mp.py
 /models.py
-Pipfile.lock

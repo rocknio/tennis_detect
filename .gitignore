@@ -1,3 +1,34 @@
-/Pipfile.lock
+*.pyc
 .idea
+logs
+app/static/uploads/photos
+management_application/static/uploads/photos
+!management_application/static/uploads/photos/adlsc-shop-pic-default@2x.png
+cron/nohup.out
+config/development.py
+
+
+# Created by https://www.gitignore.io/api/visualstudiocode
+
+### VisualStudioCode ###
+.vscode/*
+.history
+common/sql_alchemy.pyi
+node_modules
+npm-debug.log
+.DS_Store
+helper/test*.py
+run_management.py
+*.csv
+venv
+management_application/templates/merchant_portal/merchant_portal/package-lock.json
 .vscode
+config/dev.py
+
+create_models
+
+yarn.lock
+package-lock.json
+run_mp.py
+/models.py
+Pipfile.lock

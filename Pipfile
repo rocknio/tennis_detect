@@ -1,0 +1,14 @@
+[[source]]
+name = "豆瓣"
+url = "http://pypi.douban.com/simple"
+verify_ssl = false
+
+[dev-packages]
+
+[packages]
+opencv-python = "*"
+opencv-contrib-python = "*"
+numpy = "*"
+
+[requires]
+python_version = "3.8"

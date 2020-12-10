@@ -21,20 +21,62 @@ class TennisDetectService(object):
 
         self._color_boundaries = color_boundaries
 
+    @staticmethod
+    def find_max_contours(contours):
+        max_contour = None
+        for c in contours:
+            if cv2.contourArea(c) <= 50:
+                continue
+
+            if max_contour is None:
+                max_contour = c
+            else:
+                if cv2.contourArea(c) > cv2.contourArea(max_contour):
+                    max_contour = c
+
+        return max_contour
+
+    def get_direction(self, dst_center):
+        image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
+
+        ret = []
+        if image_center[0] < dst_center[0]:
+            ret.append('left|{}'.format(image_center[0] - dst_center[0]))
+        elif image_center[0] > dst_center[0]:
+            ret.append('right|{}'.format(image_center[0] - dst_center[0]))
+        else:
+            ret.append(None)
+
+        if image_center[1] < dst_center[1]:
+            ret.append('up|{}'.format(image_center[1] - dst_center[1]))
+        elif image_center[1] > dst_center[1]:
+            ret.append('down|{}'.format(image_center[1] - dst_center[1]))
+        else:
+            ret.append(None)
+
+        print(ret)
+        return ret
+
     def detect_color(self):
         if self._image is None:
             return None
 
-        # hsv = cv2.cvtColor(self._image, cv2.COLOR_RGB2HSV)
-        cv2.imshow("original", self._image)
-        for (lower, upper) in self._color_boundaries:
-            lower = np.array(lower)
-            upper = np.array(upper)
+        # cv2.imshow("original", self._image)
+        lower = np.array(self._color_boundaries[0])
+        upper = np.array(self._color_boundaries[1])
 
-            mask = cv2.inRange(self._image, lower, upper)
-            cv2.imshow("mask", mask)
-            res = cv2.bitwise_and(self._image, self._image, mask=mask)
-            cv2.imshow("result", res)
+        mask = cv2.inRange(self._image, lower, upper)
+        res = cv2.bitwise_and(self._image, self._image, mask=mask)
 
-        cv2.waitKey(0)
-        cv2.destroyAllWindows()
+        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+        c = self.find_max_contours(contours)
+        x, y, w, h = cv2.boundingRect(c)
+        cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        center = (x + w // 2, y + h // 2)
+        cv2.rectangle(res, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
+        self.get_direction(center)
+
+        image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
+        cv2.rectangle(res, (image_center[1], image_center[0]), (image_center[1] + 5, image_center[0] + 5), (0, 0, 255),
+                      2)
+        cv2.imshow("result", res)

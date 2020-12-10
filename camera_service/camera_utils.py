@@ -2,6 +2,7 @@
 import cv2
 import logging
 from tennis_detect_service.tennis_detect import TennisDetectService
+from settings import low_color, high_color
 
 
 class CameraService:
@@ -36,8 +37,12 @@ class CameraService:
                 logging.error("capture read failed")
                 break
             else:
-                tennis_detect_service = TennisDetectService([([0, 60, 100], [95, 255, 255])], cap_frame=frame)
+                tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=frame)
                 tennis_detect_service.detect_color()
+                if cv2.waitKey(1) == ord('q'):
+                    break
+
+        cv2.destroyAllWindows()
 
     def stop_capture(self):
         if not self._is_running:
@@ -53,3 +58,4 @@ class CameraService:
 
         if self._cap:
             self._cap.release()
+            cv2.destroyAllWindows()

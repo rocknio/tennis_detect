@@ -2,6 +2,13 @@
 import cv2
 import logging
 import numpy as np
+from enum import Enum
+
+
+class DetectShape(Enum):
+    circle = "CIRCLE"
+    rect = "RECT"
+    triangle = "TRIANGLE"
 
 
 class TennisDetectService(object):
@@ -57,6 +64,27 @@ class TennisDetectService(object):
         print(ret)
         return ret
 
+    @staticmethod
+    def detect_shape(contour):
+        if contour is None:
+            return
+
+        # 轮廓逼近
+        epsilon = 0.01 * cv2.arcLength(contour, True)
+        approx = cv2.approxPolyDP(contour, epsilon, True)
+
+        # 分析形状
+        corners = len(approx)
+        shape = ""
+        if corners == 3:
+            shape = DetectShape.triangle.value
+        elif corners == 4:
+            shape = DetectShape.rect.value
+        elif corners > 10:
+            shape = DetectShape.circle.value
+
+        return shape
+
     def detect_color(self):
         if self._image is None:
             return None
@@ -70,6 +98,7 @@ class TennisDetectService(object):
 
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         c = self.find_max_contours(contours)
+        shape = self.detect_shape(c)
         x, y, w, h = cv2.boundingRect(c)
         cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
         center = (x + w // 2, y + h // 2)
@@ -77,6 +106,15 @@ class TennisDetectService(object):
         self.get_direction(center)
 
         image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
-        cv2.rectangle(res, (image_center[1], image_center[0]), (image_center[1] + 5, image_center[0] + 5), (0, 0, 255),
+        cv2.rectangle(res,
+                      (image_center[1], image_center[0]),
+                      (image_center[1] + 5, image_center[0] + 5),
+                      (0, 0, 255),
                       2)
+
+        cv2.putText(res,
+                    shape,
+                    center,
+                    cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
+
         cv2.imshow("result", res)

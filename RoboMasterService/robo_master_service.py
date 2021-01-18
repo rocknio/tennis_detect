@@ -2,6 +2,8 @@
 import cv2
 import logging
 from robomaster import robot
+from tennis_detect_service.tennis_detect import TennisDetectService
+from settings import low_color, high_color
 
 
 class RoboMasterService:
@@ -12,7 +14,7 @@ class RoboMasterService:
         self._camera = None
         try:
             self._robot = robot.Robot()
-            self._robot.initialize(conn_type='sta')
+            self._robot.initialize(conn_type='sta', sn='3JKDH2T001KK23')
             self._camera = self._robot.camera
         except Exception:
             pass
@@ -31,8 +33,8 @@ class RoboMasterService:
                 self._is_need_stop = False
                 break
 
-            img = ep_camera.read_cv2_image()
-            if img:
+            img = self._camera.read_cv2_image()
+            if img is not None:
                 tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=img)
                 tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):

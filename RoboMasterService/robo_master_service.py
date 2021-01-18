@@ -3,7 +3,7 @@ import cv2
 import logging
 from robomaster import robot
 from tennis_detect_service.tennis_detect import TennisDetectService
-from settings import low_color, high_color
+from settings import low_color, high_color, robot_master_sn
 
 
 class RoboMasterService:
@@ -14,7 +14,7 @@ class RoboMasterService:
         self._camera = None
         try:
             self._robot = robot.Robot()
-            self._robot.initialize(conn_type='sta', sn='3JKDH2T001KK23')
+            self._robot.initialize(conn_type='sta', sn=robot_master_sn)
             self._camera = self._robot.camera
         except Exception:
             pass

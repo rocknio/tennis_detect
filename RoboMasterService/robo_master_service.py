@@ -13,6 +13,9 @@ class RoboMasterService:
         self._robot = None
         self._camera = None
         try:
+            # 初始化日志文件
+            robomaster.enable_logging_to_file()
+
             self._robot = robot.Robot()
             self._robot.initialize(conn_type='sta', sn=robot_master_sn)
             self._camera = self._robot.camera
@@ -31,6 +34,7 @@ class RoboMasterService:
                 logging.info("capture is stopped!")
                 self._is_running = False
                 self._is_need_stop = False
+                self._robot.close()
                 break
 
             img = self._camera.read_cv2_image()

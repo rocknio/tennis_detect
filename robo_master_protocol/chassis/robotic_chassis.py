@@ -4,7 +4,7 @@ from robo_master_protocol.common.utils import check_robot_resp_ok
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 
 
-class RoboticArm:
+class RoboticChassis:
     def __init__(self, robotic: RoboticConn):
         self._robot_ctrl = robotic
 

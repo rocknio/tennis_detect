@@ -98,7 +98,7 @@ class TennisDetectService(object):
 
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         c = self.find_max_contours(contours)
-        shape = self.detect_shape(c)
+        # shape = self.detect_shape(c)
         x, y, w, h = cv2.boundingRect(c)
         cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
         center = (x + w // 2, y + h // 2)
@@ -112,9 +112,9 @@ class TennisDetectService(object):
                       (0, 0, 255),
                       2)
 
-        cv2.putText(res,
-                    shape,
-                    center,
-                    cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
+        # cv2.putText(res,
+        #             shape,
+        #             center,
+        #             cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
 
         cv2.imshow("result", res)

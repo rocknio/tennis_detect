@@ -23,18 +23,18 @@ class RoboticGripper:
 
     def gripper_status(self):
         ret = self._robot_ctrl.robot_do_command('robotic_gripper status ?')
-        if ret == 'fail':
+        if int(ret) not in [0, 1, 2]:
             logging.error(f'get gripper_status fail')
         else:
-            self._robot_ctrl.stat.gripper_status = ret
+            self._robot_ctrl.stat.gripper_status = int(ret)
+
+        return int(ret)
 
     def gripper_ctrl(self, mode: str, level: int = 1):
-        if mode not in GripperStatus.value or level not in GripperStrengthLevel:
-            logging.error(f"param is invalid: {mode} -- {level}")
-            return
-
         ret = self._robot_ctrl.robot_do_command(f'robotic_gripper {mode} {level}')
         if check_robot_resp_ok(ret):
             self._robot_ctrl.stat.gripper_status = mode
+            return True
         else:
             logging.error(f'get gripper_status fail')
+            return False

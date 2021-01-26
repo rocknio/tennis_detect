@@ -4,25 +4,47 @@ import socket
 from robomaster import robot
 
 from RoboMasterService.robo_master_stats import RoboMasterStats
+from settings import robot_master_sn
 
 
 class RoboticConn:
-    def __init__(self, robot_host, robot_port, robotic: robot):
+    def __init__(self, robotic: robot):
         self.conn = None
-        self._address = (robot_host, int(robot_port))
         self.robot = robotic
-        self.stat = RoboMasterStats(f"{self._address}")
+        self.stat = RoboMasterStats(f'{robot_master_sn}')
+        self._address = None
 
     def connect_robo(self):
+        if self.conn:
+            return True
+
+        ip_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        # 绑定 IP 广播端口
+        ip_sock.bind(('0.0.0.0', 40926))
+
+        # 等待接收机器人广播数据
+        data, ip_str = ip_sock.recvfrom(1024)
+        host = ip_str[0]
+
+        # 设置机器人连接地址端口
+        self._address = (host, int(40923))
+
         self.conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         logging.info(f"connect to robot: {self._address}")
 
         try:
-            self.conn.connect(address=self._address)
+            self.conn.connect(self._address)
             logging.info(f"connected to {self._address}")
+
+            # 开启命令模式
+            self.robot_do_command('command')
+
+            return True
         except Exception as err:
             self.conn = None
             logging.error(f"connect to robotic failed! robot={self._address}, err = {err}")
+            return False
 
     def disconnect_robo(self):
         if self.conn:
@@ -42,10 +64,11 @@ class RoboticConn:
             if msg[-1:] != ';':
                 msg += ';'
 
-            self.conn.send(msg.encode())
+            self.conn.send(msg.encode('utf-8'))
 
             try:
-                resp = self.conn.recv(1024)
+                buf = self.conn.recv(1024)
+                resp = buf.decode('utf-8')
                 if resp[-1:] == ';':
                     resp = resp[:-1]
                 return resp

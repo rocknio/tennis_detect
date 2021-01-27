@@ -39,7 +39,6 @@ class TestArm(unittest.TestCase):
         time.sleep(6)
 
         self.assertEqual(self._chassis.move(), True)
-        time.sleep(6)
 
 
 if __name__ == '__main__':

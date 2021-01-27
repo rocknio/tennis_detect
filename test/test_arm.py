@@ -17,6 +17,7 @@ class TestArm(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._robot_conn.disconnect_robo()
+        print(f"robot stat = {self._robot_conn.stat.robotic_arm_pos}")
 
     def test_arm_recenter(self):
         self.assertEqual(self._arm.recenter(), True)
@@ -25,7 +26,7 @@ class TestArm(unittest.TestCase):
         self.assertEqual(self._arm.current_pos(), True)
 
     def test_arm_move(self):
-        self.assertEqual(self._arm.arm_move(self, 100, 100), True)
+        self.assertEqual(self._arm.arm_move(5, 5), True)
 
 
 if __name__ == '__main__':

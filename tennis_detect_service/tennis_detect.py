@@ -100,13 +100,13 @@ class TennisDetectService(object):
         c = self.find_max_contours(contours)
         # shape = self.detect_shape(c)
         x, y, w, h = cv2.boundingRect(c)
-        cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
+        cv2.rectangle(self._image, (x, y), (x + w, y + h), (0, 0, 255), 2)
         center = (x + w // 2, y + h // 2)
-        cv2.rectangle(res, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
+        cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
         direction = self.get_direction(center)
 
         image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
-        cv2.rectangle(res,
+        cv2.rectangle(self._image,
                       (image_center[1], image_center[0]),
                       (image_center[1] + 5, image_center[0] + 5),
                       (0, 0, 255),
@@ -117,5 +117,5 @@ class TennisDetectService(object):
         #             center,
         #             cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
 
-        # cv2.imshow("result", res)
+        cv2.imshow("result", self._image)
         return direction

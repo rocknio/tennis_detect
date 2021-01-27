@@ -38,4 +38,4 @@ if __name__ == '__main__':
 
     # 3、RoboMaster摄像头采集图像
     svc = RoboMasterService()
-    # svc.start_capture()
+    svc.start_capture()

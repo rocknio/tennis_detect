@@ -10,6 +10,10 @@ class RoboticGripper:
         self._robot_ctrl = robotic
 
     def gripper_status(self):
+        """
+        robot返回status始终未0，不要使用该方法
+        :return:
+        """
         ret = self._robot_ctrl.robot_do_command('robotic_gripper status ?')
         if int(ret) not in [0, 1, 2]:
             logging.error(f'get gripper_status fail')

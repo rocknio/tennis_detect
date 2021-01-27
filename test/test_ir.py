@@ -17,11 +17,13 @@ class TestArm(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._robot_conn.disconnect_robo()
+        print(f"robot stat = {self._robot_conn.stat.ir}")
 
     def test_ir_switch_on(self):
         self.assertEqual(self._ir.ir_switch('on'), True)
 
     def test_ir_distance(self):
+        self._ir.ir_switch('on')
         self.assertEqual(self._ir.ir_distance(), True)
 
 

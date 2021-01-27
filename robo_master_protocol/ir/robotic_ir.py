@@ -13,8 +13,10 @@ class RoboticIr:
         ret = self._robot_ctrl.robot_do_command(f'ir_distance_sensor measure {switch}')
         if check_robot_resp_ok(ret):
             self._robot_ctrl.stat.ir['switch'] = switch
+            return True
         else:
             logging.error(f'set ir_switch = {switch} fail')
+            return False
 
     def ir_distance(self):
         if self._robot_ctrl.stat.ir['switch'] == 'off':

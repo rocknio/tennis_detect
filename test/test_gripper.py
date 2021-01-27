@@ -17,6 +17,7 @@ class TestGripper(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._robot_conn.disconnect_robo()
+        print(f"robot stat = {self._robot_conn.stat.gripper_status}")
 
     def test_gripper_status(self):
         ret = self._gripper.gripper_status()

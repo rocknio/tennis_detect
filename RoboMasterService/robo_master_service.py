@@ -75,7 +75,7 @@ class RoboMasterService:
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                cv2.imshow("result", img)
+                # cv2.imshow("result", img)
 
                 # TODO: 根据direction，控制robomaster移动
                 pass

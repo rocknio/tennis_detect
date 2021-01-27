@@ -63,10 +63,11 @@ class RoboMasterService:
                 logging.info("capture is stopped!")
                 self._is_running = False
                 self._is_need_stop = False
+                self._camera.stop_video_stream()
                 self.release_robot()
                 break
 
-            img = self._camera.read_cv2_image()
+            img = self._camera.read_cv2_image(strategy='newest')
             if img is not None:
                 tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=img)
                 direction = tennis_detect_service.detect_color()

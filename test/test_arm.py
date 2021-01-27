@@ -26,7 +26,7 @@ class TestArm(unittest.TestCase):
         self.assertEqual(self._arm.current_pos(), True)
 
     def test_arm_move(self):
-        self.assertEqual(self._arm.arm_move(5, 5), True)
+        self.assertEqual(self._arm.arm_move(2, 0), True)
 
 
 if __name__ == '__main__':

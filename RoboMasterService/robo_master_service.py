@@ -5,7 +5,7 @@ from robomaster import robot
 
 from robo_master_protocol.arm.robotic_arm import RoboticArm
 from robo_master_protocol.chassis.robotic_chassis import RoboticChassis
-from robo_master_protocol.gripper.robotic_gripper import RoboticGripper, GripperStatus
+from robo_master_protocol.gripper.robotic_gripper import RoboticGripper
 from robo_master_protocol.ir.robotic_ir import RoboticIr
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from tennis_detect_service.tennis_detect import TennisDetectService
@@ -71,6 +71,7 @@ class RoboMasterService:
             if img is not None:
                 tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=img)
                 direction = tennis_detect_service.detect_color()
+                logging.info(f"direction: {direction}")
                 if cv2.waitKey(1) == ord('q'):
                     break
 

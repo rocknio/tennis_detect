@@ -9,7 +9,11 @@ class RoboticArm:
         self._robot_ctrl = robotic
 
     def recenter(self):
-        self._robot_ctrl.robot_do_command('robotic_arm recenter')
+        ret = self._robot_ctrl.robot_do_command('robotic_arm recenter')
+        if check_robot_resp_ok(ret):
+            return True
+        else:
+            return False
 
     def current_pos(self):
         pos = self._robot_ctrl.robot_do_command('robotic_arm position ?')
@@ -17,8 +21,9 @@ class RoboticArm:
             'x': pos[0],
             'y': pos[1]
         }
+        return True
 
-    def move_to(self, x, y):
+    def arm_move(self, x, y):
         cmd = 'robotic_arm moveto '
         if x:
             cmd += f'x {x}'
@@ -33,5 +38,8 @@ class RoboticArm:
 
             if y:
                 self._robot_ctrl.stat.robotic_arm_pos['y'] = y
+
+            return True
         else:
             logging.error(f'robotic_arm move to {x}:{y} failed, resp = {ret}')
+            return False

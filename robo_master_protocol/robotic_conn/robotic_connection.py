@@ -4,6 +4,7 @@ import socket
 from robomaster import robot
 
 from RoboMasterService.robo_master_stats import RoboMasterStats
+from robo_master_protocol.common.utils import check_robot_resp_ok
 from settings import robot_master_sn
 
 
@@ -38,11 +39,14 @@ class RoboticConn:
             logging.info(f"connected to {self._address}")
 
             # 开启命令模式
-            self.robot_do_command('command')
+            ret = self.robot_do_command('command')
+            if not check_robot_resp_ok(ret):
+                logging.error(f"command mode set failed!")
+                self.disconnect_robo()
 
             return True
         except Exception as err:
-            self.conn = None
+            self.disconnect_robo()
             logging.error(f"connect to robotic failed! robot={self._address}, err = {err}")
             return False
 

@@ -103,7 +103,7 @@ class TennisDetectService(object):
         cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
         center = (x + w // 2, y + h // 2)
         cv2.rectangle(res, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
-        self.get_direction(center)
+        direction = self.get_direction(center)
 
         image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
         cv2.rectangle(res,
@@ -117,4 +117,5 @@ class TennisDetectService(object):
         #             center,
         #             cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
 
-        cv2.imshow("result", res)
+        # cv2.imshow("result", res)
+        return direction

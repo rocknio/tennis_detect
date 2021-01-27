@@ -5,18 +5,6 @@ from robo_master_protocol.common.utils import check_robot_resp_ok, MyEnumMeta
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 
 
-class GripperStatus(Enum, metaclass=MyEnumMeta):
-    open = 'open'
-    close = 'close'
-
-
-class GripperStrengthLevel(Enum, metaclass=MyEnumMeta):
-    lowest = 1
-    normal = 2
-    high = 3
-    max = 4
-
-
 class RoboticGripper:
     def __init__(self, robotic: RoboticConn):
         self._robot_ctrl = robotic

@@ -18,6 +18,7 @@ class RoboMasterService:
         self._is_running = False
         self._robot = None
         self._camera = None
+
         try:
             # 初始化日志文件
             # robomaster.enable_logging_to_file()
@@ -39,7 +40,7 @@ class RoboMasterService:
             self._arm = RoboticArm(self._robotic_conn)
             self._gripper = RoboticGripper(self._robotic_conn)
             self._ir = RoboticIr(self._robotic_conn)
-            self.chassis = RoboticChassis(self._robotic_conn)
+            self._chassis = RoboticChassis(self._robotic_conn)
         except Exception as err:
             self._camera = None
             self._robot.close()
@@ -68,9 +69,14 @@ class RoboMasterService:
             img = self._camera.read_cv2_image()
             if img is not None:
                 tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=img)
-                tennis_detect_service.detect_color()
+                direction = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
+
+                cv2.imshow("result", img)
+
+                # TODO: 根据direction，控制robomaster移动
+                pass
 
         cv2.destroyAllWindows()
 

@@ -33,7 +33,7 @@ class RoboMasterService:
             self._camera = self._robot.camera
 
             # 初始化控制连接
-            self._robotic_conn = RoboticConn(robot_host, robot_port, self._robot)
+            self._robotic_conn = RoboticConn(self._robot)
             if self._robotic_conn.connect_robo() is False:
                 logging.fatal(f'connect to robot failed!, host = {robot_host}, port = {robot_port}')
                 self.release_robot()
@@ -47,22 +47,6 @@ class RoboMasterService:
             self._camera = None
             self._robot.close()
             logging.error(f"exception: {err}")
-
-    def test_move(self):
-        pass
-
-    def test_arm(self):
-        pass
-
-    def test_gripper(self):
-        print(self._gripper.gripper_status())
-        self._gripper.gripper_ctrl(GripperStatus.close.value)
-        print(self._gripper.gripper_status())
-        self._gripper.gripper_ctrl(GripperStatus.open.value)
-        print(self._gripper.gripper_status())
-
-    def test_ir(self):
-        pass
 
     def release_robot(self):
         if self._robot:

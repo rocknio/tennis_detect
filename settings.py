@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+# 格式 B R G
 low_color = [0, 60, 100]
 high_color = [95, 255, 255]
 

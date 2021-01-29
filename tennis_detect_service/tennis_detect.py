@@ -85,6 +85,24 @@ class TennisDetectService(object):
 
         return shape
 
+    @staticmethod
+    def detect_edge(img):
+        # 高斯模糊
+        blurred = cv2.GaussianBlur(img, (3, 3), 0)
+
+        # 灰度
+        gray = cv2.cvtColor(blurred, cv2.COLOR_RGBA2GRAY)
+
+        # 图像梯度
+        x_grad = cv2.Sobel(gray, cv2.CV_16SC1, 1, 0)
+        y_grad = cv2.Sobel(gray, cv2.CV_16SC1, 0, 1)
+
+        # 计算边缘
+        edge_output = cv2.Canny(x_grad, y_grad, 80, 240)
+
+        dst = cv2.bitwise_and(img, img, mask=edge_output)
+        return dst
+
     def detect_color(self):
         if self._image is None:
             return None
@@ -112,10 +130,13 @@ class TennisDetectService(object):
                       (0, 0, 255),
                       2)
 
+        # edge = self.detect_edge(res)
+        cv2.imshow("edge", self._image)
+
         # cv2.putText(res,
         #             shape,
         #             center,
         #             cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
 
-        cv2.imshow("result", self._image)
+        # cv2.imshow("result", self._image)
         return direction

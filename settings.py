@@ -9,9 +9,9 @@ robot_master_sn = '3JKDH2T001KK23'
 robot_host = '192.168.0.110'
 robot_port = 40923
 
-detect_zoo = [(300, 360), (1000, 700)]
+detect_zone = [(300, 360), (1000, 700)]
 
-x_match_limit_pixel = 10
-y_match_limit_pixel = 10
+x_match_limit_pixel = 30
+y_match_limit_pixel = 30
 
 area_match_percentage = 0.9

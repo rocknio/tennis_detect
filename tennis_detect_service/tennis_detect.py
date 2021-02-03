@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from enum import Enum
 
-from settings import detect_zoo, x_match_limit_pixel, y_match_limit_pixel
+from settings import detect_zone, x_match_limit_pixel, y_match_limit_pixel
 
 
 class DetectShape(Enum):
@@ -63,7 +63,6 @@ class TennisDetectService(object):
         else:
             ret.append(None)
 
-        print(ret)
         return ret
 
     @staticmethod
@@ -106,26 +105,16 @@ class TennisDetectService(object):
         return dst
 
     @staticmethod
-    def is_detect_contour_in_zoo(contour):
-        x, y, w, h = cv2.boundingRect(contour)
-        contour_area = w * h
-
-        detect_zoo_w = detect_zoo[1][0] - detect_zoo[0][0]
-        detect_zoo_h = detect_zoo[1][1] - detect_zoo[1][0]
-
-        # TODO: 待完成面积占比计算
-
-    @staticmethod
     def is_x_match(detect_center, dst_center):
         detect_x = detect_center[0]
-        dst_x = dst_center[0]
+        dst_x = dst_center[1]
         diff = abs(dst_x - detect_x)
         return diff <= x_match_limit_pixel
 
     @staticmethod
     def is_y_match(detect_center, dst_center):
         detect_y = detect_center[1]
-        dst_y = dst_center[1]
+        dst_y = dst_center[0]
         diff = abs(dst_y - detect_y)
         return diff <= y_match_limit_pixel
 
@@ -149,30 +138,30 @@ class TennisDetectService(object):
 
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         c = self.find_max_contours(contours)
-        if c.all():
-            x, y, w, h = cv2.boundingRect(c)
-            cv2.rectangle(self._image, (x, y), (x + w, y + h), (0, 0, 255), 2)
 
-            # 画出被探测物体区域中心点
-            center = (x + w // 2, y + h // 2)
-            cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
+        # 画出探测区域中心点
+        detect_zone_center = (detect_zone[0][1] + (detect_zone[1][1] - detect_zone[0][1]) // 2,
+                              detect_zone[0][0] + (detect_zone[1][0] - detect_zone[0][0]) // 2,)
+        cv2.rectangle(self._image,
+                      (detect_zone_center[1], detect_zone_center[0]),
+                      (detect_zone_center[1] + x_match_limit_pixel // 2, detect_zone_center[0] + y_match_limit_pixel // 2),
+                      (0, 255, 0),
+                      2)
 
-            # 画出探测区域中心点
-            detect_zoo_center = (detect_zoo[0][1] + (detect_zoo[1][1] - detect_zoo[0][1]) // 2,
-                                 detect_zoo[0][0] + (detect_zoo[1][0] - detect_zoo[0][0]) // 2)
-            cv2.rectangle(self._image,
-                          (detect_zoo_center[1], detect_zoo_center[0]),
-                          (detect_zoo_center[1] + 5, detect_zoo_center[0] + 5),
-                          (0, 255, 0),
-                          2)
+        # 划线重点探测区域
+        cv2.rectangle(self._image, detect_zone[0], detect_zone[1], (0, 255, 0), 2)
 
-            # 判断偏移方向和像素距离
-            direction = self.get_direction(center)
+        # 画出被探测物体区域及中心点
+        x, y, w, h = cv2.boundingRect(c)
+        center = (x + w // 2, y + h // 2)
+        if self.is_match(center, detect_zone_center):
+            center_color = (0, 255, 0)
+        else:
+            center_color = (0, 0, 255)
 
-            # 划线重点探测区域
-            cv2.rectangle(self._image, detect_zoo[0], detect_zoo[1], (0, 255, 0), 2)
+        cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
 
-            cv2.imshow("result", self._image)
+        cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
 
         cv2.imshow("result", self._image)
         return direction, is_match

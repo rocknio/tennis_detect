@@ -38,9 +38,18 @@ class CameraService:
                 break
             else:
                 tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=frame)
-                tennis_detect_service.detect_color()
+                is_match, delta = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
+
+                # 判断移动方向
+                if is_match:
+                    # 抓取
+                    print("可以抓取了")
+
+                    # 抬臂，准备找目标字牌
+                else:
+                    delta_x, delta_y = delta
 
         cv2.destroyAllWindows()
 

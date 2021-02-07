@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 from camera_service.camera_utils import CameraService
 from config_util.config_service import show_color_setting
+from config_util.settings import SettingService
 from tennis_detect_service.tennis_detect import TennisDetectService
 from RoboMasterService.robo_master_service import RoboMasterService
 import logging
 import logging.handlers
-from multiprocessing import Process
+from multiprocessing import Process, Manager
 
 
 def init_logging():
@@ -31,11 +32,13 @@ def init_logging():
 if __name__ == '__main__':
     init_logging()
 
+    d = Manager().dict()
+
     # 启动设置界面
-    p = Process(target=show_color_setting, args=('lower_color_img',))
+    p = Process(target=show_color_setting, args=('low', d))
     p.start()
 
-    p1 = Process(target=show_color_setting, args=('higher_color_img',))
+    p1 = Process(target=show_color_setting, args=('high', d))
     p1.start()
 
     # 1、图片文件测试

@@ -9,7 +9,7 @@ from robo_master_protocol.gripper.robotic_gripper import RoboticGripper
 from robo_master_protocol.ir.robotic_ir import RoboticIr
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from tennis_detect_service.tennis_detect import TennisDetectService
-from settings import low_color, high_color, robot_master_sn, robot_host, robot_port
+from config_util.settings import SettingService
 
 
 class RoboMasterService:

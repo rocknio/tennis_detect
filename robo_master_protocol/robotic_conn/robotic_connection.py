@@ -5,14 +5,14 @@ from robomaster import robot
 
 from RoboMasterService.robo_master_stats import RoboMasterStats
 from robo_master_protocol.common.utils import check_robot_resp_ok
-from settings import robot_master_sn
+from config_util.settings import SettingService
 
 
 class RoboticConn:
     def __init__(self, robotic: robot):
         self.conn = None
         self.robot = robotic
-        self.stat = RoboMasterStats(f'{robot_master_sn}')
+        self.stat = RoboMasterStats(f'{SettingService.settings.robot_master_sn}')
         self._address = None
 
     def connect_robo(self):

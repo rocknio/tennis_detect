@@ -4,7 +4,7 @@ import logging
 import numpy as np
 from enum import Enum
 
-from settings import detect_zone, x_match_limit_pixel, y_match_limit_pixel, min_contour_area
+from config_util.settings import SettingService
 
 
 class DetectShape(Enum):

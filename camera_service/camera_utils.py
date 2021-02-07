@@ -2,7 +2,7 @@
 import cv2
 import logging
 from tennis_detect_service.tennis_detect import TennisDetectService
-from settings import low_color, high_color
+from config_util.settings import SettingService
 
 
 class CameraService:

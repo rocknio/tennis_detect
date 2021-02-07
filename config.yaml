@@ -1,0 +1,21 @@
+color_range:
+  high:
+    blue: 119
+    green: 255
+    red: 255
+  low:
+    blue: 0
+    green: 255
+    red: 255
+detect_zone:
+  down_right:
+    x: 1000
+    y: 700
+  top_left:
+    x: 300
+    y: 360
+limit_pixel:
+  x: 30
+  y: 30
+min_contour_area: 50
+robot_master_sn: 3JKDH2T001KK23

@@ -46,12 +46,12 @@ if __name__ == '__main__':
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    svc = CameraService(0, d)
-    svc.start_capture()
+    # svc = CameraService(0, d)
+    # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
-    # svc = RoboMasterService()
-    # svc.start_capture()
+    svc = RoboMasterService(d)
+    svc.start_capture()
 
     p.join()
     p1.join()

@@ -3,17 +3,14 @@ import cv2
 import logging
 from robomaster import robot
 
-from robo_master_protocol.arm.robotic_arm import RoboticArm
-from robo_master_protocol.chassis.robotic_chassis import RoboticChassis
-from robo_master_protocol.gripper.robotic_gripper import RoboticGripper
-from robo_master_protocol.ir.robotic_ir import RoboticIr
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
+from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
 from tennis_detect_service.tennis_detect import TennisDetectService
-from config_util.settings import SettingService
 
 
 class RoboMasterService:
-    def __init__(self):
+    def __init__(self, cfg):
+        self._cfg = cfg
         self._is_need_stop = False
         self._is_running = False
         self._robot = None
@@ -27,20 +24,17 @@ class RoboMasterService:
             self._robot = robot.Robot()
 
             # 初始化相机
-            self._robot.initialize(conn_type='sta', sn=robot_master_sn)
+            self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
             self._camera = self._robot.camera
 
             # 初始化控制连接
             self._robotic_conn = RoboticConn(self._robot)
             if self._robotic_conn.connect_robo() is False:
-                logging.fatal(f'connect to robot failed!, host = {robot_host}, port = {robot_port}')
+                logging.fatal(f'connect to robot failed!')
                 self.release_robot()
 
             # 初始化各模块
-            self._arm = RoboticArm(self._robotic_conn)
-            self._gripper = RoboticGripper(self._robotic_conn)
-            self._ir = RoboticIr(self._robotic_conn)
-            self._chassis = RoboticChassis(self._robotic_conn)
+            self._robotic_ctrl = RoboticController(self._robotic_conn)
         except Exception as err:
             self._camera = None
             self._robot.close()
@@ -69,16 +63,22 @@ class RoboMasterService:
 
             img = self._camera.read_cv2_image(strategy='newest')
             if img is not None:
-                tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=img)
-                direction = tennis_detect_service.detect_color()
-                logging.info(f"direction: {direction}")
+                tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
+                is_match, delta = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                # cv2.imshow("result", img)
+                # 判断移动方向
+                if is_match:
+                    # 抓取
+                    print("可以抓取了")
 
-                # TODO: 根据direction，控制robomaster移动
-                pass
+                    # 抬臂，准备找目标字牌
+                elif delta:
+                    delta_x, delta_y = delta
+                else:
+                    # 图像没有目标
+                    pass
 
         cv2.destroyAllWindows()
 

@@ -80,3 +80,5 @@ class RoboticConn:
                 logging.error(f"Recv robot response error: {err}")
                 self.reconnect_robo()
                 return 'fail'
+        else:
+            return 'fail'

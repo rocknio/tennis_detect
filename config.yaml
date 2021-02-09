@@ -1,12 +1,12 @@
 color_range:
   high:
-    blue: 119
+    blue: 95
     green: 255
     red: 255
   low:
     blue: 0
-    green: 255
-    red: 255
+    green: 100
+    red: 60
 detect_zone:
   down_right:
     x: 1000

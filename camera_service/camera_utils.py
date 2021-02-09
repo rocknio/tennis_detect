@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import cv2
 import logging
-from tennis_detect_service.tennis_detect import TennisDetectService
+
 from config_util.settings import SettingService
+from tennis_detect_service.tennis_detect import TennisDetectService
 
 
 class CameraService:
-    def __init__(self, channel):
+    def __init__(self, channel, cfg):
+        self._cfg = cfg
         self._channel = channel
         self._is_need_stop = False
         self._is_running = False
@@ -37,7 +39,7 @@ class CameraService:
                 logging.error("capture read failed")
                 break
             else:
-                tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=frame)
+                tennis_detect_service = TennisDetectService(cap_frame=frame, config=self._cfg)
                 is_match, delta = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
@@ -48,8 +50,11 @@ class CameraService:
                     print("可以抓取了")
 
                     # 抬臂，准备找目标字牌
-                else:
+                elif delta:
                     delta_x, delta_y = delta
+                else:
+                    # 图像没有目标
+                    pass
 
         cv2.destroyAllWindows()
 

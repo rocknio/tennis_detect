@@ -13,6 +13,10 @@ def show_color_setting(window_name, cfg):
     settings = SettingService()
     cfg['low_color'] = settings.settings['color_range']['low']
     cfg['high_color'] = settings.settings['color_range']['high']
+    cfg['detect_zone'] = settings.settings['detect_zone']
+    cfg['limit_pixel'] = settings.settings['limit_pixel']
+    cfg['min_contour_area'] = settings.settings['min_contour_area']
+    cfg['robot_master_sn'] = settings.settings['robot_master_sn']
 
     img = np.zeros((100, 100, 3), np.uint8)
     cv2.namedWindow(window_name)

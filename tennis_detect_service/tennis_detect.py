@@ -4,8 +4,6 @@ import logging
 import numpy as np
 from enum import Enum
 
-from config_util.settings import SettingService
-
 
 class DetectShape(Enum):
     circle = "CIRCLE"
@@ -13,8 +11,15 @@ class DetectShape(Enum):
     triangle = "TRIANGLE"
 
 
+class Colors(Enum):
+    red = (0, 0, 255)
+    green = (0, 255, 255)
+    blue = (255, 0, 0)
+
+
 class TennisDetectService(object):
-    def __init__(self, color_boundaries, img_path=None, cap_frame=None):
+    def __init__(self, config, img_path=None, cap_frame=None):
+        self._cfg = config
         self._image_path = img_path
         if self._image_path is not None:
             self._output_path = '.' + self._image_path.split('.')[1] + '_out.' + self._image_path.split('.')[2]
@@ -28,13 +33,12 @@ class TennisDetectService(object):
         elif cap_frame is not None:
             self._image = cap_frame
 
-        self._color_boundaries = color_boundaries
+        # self._color_boundaries = color_boundaries
 
-    @staticmethod
-    def find_max_contours(contours):
+    def find_max_contours(self, contours):
         max_contour = None
         for c in contours:
-            if cv2.contourArea(c) <= min_contour_area:
+            if cv2.contourArea(c) <= self._cfg['min_contour_area']:
                 continue
 
             if max_contour is None:
@@ -43,7 +47,7 @@ class TennisDetectService(object):
                 if cv2.contourArea(c) > cv2.contourArea(max_contour):
                     max_contour = c
 
-        if max_contour:
+        if max_contour is not None:
             return max_contour, True
         else:
             return max_contour, False
@@ -107,19 +111,17 @@ class TennisDetectService(object):
         dst = cv2.bitwise_and(img, img, mask=edge_output)
         return dst
 
-    @staticmethod
-    def is_x_match(detect_center, dst_center):
+    def is_x_match(self, detect_center, dst_center):
         detect_x = detect_center[0]
         dst_x = dst_center[1]
         diff = abs(dst_x - detect_x)
-        return diff <= x_match_limit_pixel, dst_x - detect_x
+        return diff <= self._cfg['limit_pixel']['x'], dst_x - detect_x
 
-    @staticmethod
-    def is_y_match(detect_center, dst_center):
+    def is_y_match(self, detect_center, dst_center):
         detect_y = detect_center[1]
         dst_y = dst_center[0]
         diff = abs(dst_y - detect_y)
-        return diff <= y_match_limit_pixel, dst_y - detect_y
+        return diff <= self._cfg['limit_pixel']['y'], dst_y - detect_y
 
     def is_match(self, detect_center, dst_center):
         x_match, delta_x = self.is_x_match(detect_center, dst_center)
@@ -133,8 +135,12 @@ class TennisDetectService(object):
         delta = None
         is_match = False
 
-        lower = np.array(self._color_boundaries[0])
-        upper = np.array(self._color_boundaries[1])
+        lower = np.array([self._cfg['low_color']['blue'],
+                          self._cfg['low_color']['red'],
+                          self._cfg['low_color']['green']])
+        upper = np.array([self._cfg['high_color']['blue'],
+                          self._cfg['high_color']['red'],
+                          self._cfg['high_color']['green']])
 
         mask = cv2.inRange(self._image, lower, upper)
         # res = cv2.bitwise_and(self._image, self._image, mask=mask)
@@ -143,16 +149,26 @@ class TennisDetectService(object):
         c, is_found = self.find_max_contours(contours)
         if is_found:
             # 画出探测区域中心点
-            detect_zone_center = (detect_zone[0][1] + (detect_zone[1][1] - detect_zone[0][1]) // 2,
-                                  detect_zone[0][0] + (detect_zone[1][0] - detect_zone[0][0]) // 2,)
+            detect_zone_center = (self._cfg['detect_zone']['top_left']['y']
+                                  + (self._cfg['detect_zone']['down_right']['y']
+                                     - self._cfg['detect_zone']['top_left']['y']) // 2,
+
+                                  self._cfg['detect_zone']['top_left']['x']
+                                  + (self._cfg['detect_zone']['down_right']['x']
+                                     - self._cfg['detect_zone']['top_left']['x']) // 2,)
+
             cv2.rectangle(self._image,
                           (detect_zone_center[1], detect_zone_center[0]),
-                          (detect_zone_center[1] + x_match_limit_pixel // 2, detect_zone_center[0] + y_match_limit_pixel // 2),
+                          (detect_zone_center[1] + self._cfg['limit_pixel']['x'] // 2,
+                           detect_zone_center[0] + self._cfg['limit_pixel']['y'] // 2),
                           (0, 255, 0),
                           2)
 
             # 划线重点探测区域
-            cv2.rectangle(self._image, detect_zone[0], detect_zone[1], (0, 255, 0), 2)
+            cv2.rectangle(self._image,
+                          (self._cfg['detect_zone']['top_left']['x'], self._cfg['detect_zone']['top_left']['y']),
+                          (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
+                          (0, 255, 0), 2)
 
             # 画出被探测物体区域及中心点
             x, y, w, h = cv2.boundingRect(c)
@@ -160,13 +176,17 @@ class TennisDetectService(object):
 
             is_match, delta = self.is_match(center, detect_zone_center)
             if is_match:
-                center_color = (0, 255, 0)
+                center_color = Colors.green.value
             else:
-                center_color = (0, 0, 255)
+                center_color = Colors.red.value
 
             cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
 
             cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
+
+            # 返回值打印在图像上
+            text = f'is_match = {is_match}, delta = {delta}'
+            cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
 
         cv2.imshow("result", self._image)
         return is_match, delta

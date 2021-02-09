@@ -13,7 +13,7 @@ class DetectShape(Enum):
 
 class Colors(Enum):
     red = (0, 0, 255)
-    green = (0, 255, 255)
+    green = (0, 255, 0)
     blue = (255, 0, 0)
 
 
@@ -145,31 +145,31 @@ class TennisDetectService(object):
         mask = cv2.inRange(self._image, lower, upper)
         # res = cv2.bitwise_and(self._image, self._image, mask=mask)
 
+        # 画出探测区域中心点
+        detect_zone_center = (self._cfg['detect_zone']['top_left']['y']
+                              + (self._cfg['detect_zone']['down_right']['y']
+                                 - self._cfg['detect_zone']['top_left']['y']) // 2,
+
+                              self._cfg['detect_zone']['top_left']['x']
+                              + (self._cfg['detect_zone']['down_right']['x']
+                                 - self._cfg['detect_zone']['top_left']['x']) // 2,)
+
+        cv2.rectangle(self._image,
+                      (detect_zone_center[1], detect_zone_center[0]),
+                      (detect_zone_center[1] + self._cfg['limit_pixel']['x'] // 2,
+                       detect_zone_center[0] + self._cfg['limit_pixel']['y'] // 2),
+                      (0, 255, 0),
+                      2)
+
+        # 划线重点探测区域
+        cv2.rectangle(self._image,
+                      (self._cfg['detect_zone']['top_left']['x'], self._cfg['detect_zone']['top_left']['y']),
+                      (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
+                      (0, 255, 0), 2)
+
         contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
         c, is_found = self.find_max_contours(contours)
         if is_found:
-            # 画出探测区域中心点
-            detect_zone_center = (self._cfg['detect_zone']['top_left']['y']
-                                  + (self._cfg['detect_zone']['down_right']['y']
-                                     - self._cfg['detect_zone']['top_left']['y']) // 2,
-
-                                  self._cfg['detect_zone']['top_left']['x']
-                                  + (self._cfg['detect_zone']['down_right']['x']
-                                     - self._cfg['detect_zone']['top_left']['x']) // 2,)
-
-            cv2.rectangle(self._image,
-                          (detect_zone_center[1], detect_zone_center[0]),
-                          (detect_zone_center[1] + self._cfg['limit_pixel']['x'] // 2,
-                           detect_zone_center[0] + self._cfg['limit_pixel']['y'] // 2),
-                          (0, 255, 0),
-                          2)
-
-            # 划线重点探测区域
-            cv2.rectangle(self._image,
-                          (self._cfg['detect_zone']['top_left']['x'], self._cfg['detect_zone']['top_left']['y']),
-                          (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
-                          (0, 255, 0), 2)
-
             # 画出被探测物体区域及中心点
             x, y, w, h = cv2.boundingRect(c)
             center = (x + w // 2, y + h // 2)

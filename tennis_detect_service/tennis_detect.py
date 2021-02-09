@@ -181,7 +181,6 @@ class TennisDetectService(object):
                 center_color = Colors.red.value
 
             cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
-
             cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
 
             # 返回值打印在图像上

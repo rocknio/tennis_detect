@@ -12,7 +12,7 @@ class RoboticConn:
     def __init__(self, robotic: robot):
         self.conn = None
         self.robot = robotic
-        self.stat = RoboMasterStats(f'{SettingService.settings.robot_master_sn}')
+        self.stat = RoboMasterStats(f'{SettingService().settings.robot_master_sn}')
         self._address = None
 
     def connect_robo(self):

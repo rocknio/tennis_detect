@@ -31,27 +31,15 @@ class RoboticController:
         if action:
             action()
 
-    def move_left(self, speed, duration=None):
+    def move_x(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(y=(-1 * speed))
 
             self.idle(duration, self.stop)
 
-    def move_right(self, speed, duration=None):
-        if self._chassis:
-            self._chassis.move(y=speed)
-
-            self.idle(duration, self.stop)
-
-    def move_forward(self, speed, duration=None):
+    def move_y(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(x=speed)
-
-            self.idle(duration, self.stop)
-
-    def move_backward(self, speed, duration=None):
-        if self._chassis:
-            self._chassis.move(x=(-1 * speed))
 
             self.idle(duration, self.stop)
 

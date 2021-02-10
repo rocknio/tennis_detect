@@ -101,8 +101,9 @@ class RoboMasterService:
         if not x_match:
             # 横向移动
             delta_x = delta[0]
-            pass
+            self._robotic_ctrl.move_x(delta_x, 1)
 
         if not y_match:
             # 纵向移动
             delta_y = delta[1]
+            self._robotic_ctrl.move_y(delta_y, 1)

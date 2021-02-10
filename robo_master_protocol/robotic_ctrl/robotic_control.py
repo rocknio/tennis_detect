@@ -1,3 +1,5 @@
+import time
+
 from robo_master_protocol.arm.robotic_arm import RoboticArm
 from robo_master_protocol.chassis.robotic_chassis import RoboticChassis
 from robo_master_protocol.gripper.robotic_gripper import RoboticGripper
@@ -21,25 +23,46 @@ class RoboticController:
             self._ir = RoboticIr(self._robotic_conn)
             self._chassis = RoboticChassis(self._robotic_conn)
 
-    def move_left(self, speed):
+    @staticmethod
+    def idle(duration, action=None):
+        if duration:
+            time.sleep(duration)
+
+        if action:
+            action()
+
+    def move_left(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(y=(-1 * speed))
 
-    def move_right(self, speed):
+            self.idle(duration, self.stop)
+
+    def move_right(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(y=speed)
 
-    def move_forward(self, speed):
+            self.idle(duration, self.stop)
+
+    def move_forward(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(x=speed)
 
-    def move_backward(self, speed):
+            self.idle(duration, self.stop)
+
+    def move_backward(self, speed, duration=None):
         if self._chassis:
             self._chassis.move(x=(-1 * speed))
 
-    def move_rotate(self, speed, direction):
+            self.idle(duration, self.stop)
+
+    def move_rotate(self, speed, direction=1, duration=None):
         if self._chassis:
             self._chassis.move(x=(direction * speed))
+            self.idle(duration, self.stop)
+
+    def stop(self):
+        if self._chassis:
+            self._chassis.move(0, 0, 0)
 
     def expand_arm(self, x, y):
         if self._arm:

@@ -126,14 +126,14 @@ class TennisDetectService(object):
     def is_match(self, detect_center, dst_center):
         x_match, delta_x = self.is_x_match(detect_center, dst_center)
         y_match, delta_y = self.is_y_match(detect_center, dst_center)
-        return x_match and y_match, (delta_x, delta_y)
+        return x_match, y_match, (delta_x, delta_y)
 
     def detect_color(self):
         if self._image is None:
             return None
 
         delta = None
-        is_match = False
+        x_match, y_match = False, False
 
         lower = np.array([self._cfg['low_color']['blue'],
                           self._cfg['low_color']['red'],
@@ -174,8 +174,8 @@ class TennisDetectService(object):
             x, y, w, h = cv2.boundingRect(c)
             center = (x + w // 2, y + h // 2)
 
-            is_match, delta = self.is_match(center, detect_zone_center)
-            if is_match:
+            x_match, y_match, delta = self.is_match(center, detect_zone_center)
+            if x_match and y_match:
                 center_color = Colors.green.value
             else:
                 center_color = Colors.red.value
@@ -184,8 +184,8 @@ class TennisDetectService(object):
             cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
 
             # 返回值打印在图像上
-            text = f'is_match = {is_match}, delta = {delta}'
+            text = f'x_match = {x_match} and y_match = {y_match}, delta = {delta}'
             cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
 
         cv2.imshow("result", self._image)
-        return is_match, delta
+        return x_match, y_match, delta

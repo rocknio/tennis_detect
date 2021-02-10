@@ -35,6 +35,10 @@ class RoboMasterService:
 
             # 初始化各模块
             self._robotic_ctrl = RoboticController(self._robotic_conn)
+
+            # 初始化状态
+            self._robotic_ctrl.reset_arm()
+            self._robotic_ctrl.open_gripper()
         except Exception as err:
             self._camera = None
             self._robot.close()
@@ -64,21 +68,11 @@ class RoboMasterService:
             img = self._camera.read_cv2_image(strategy='newest')
             if img is not None:
                 tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
-                is_match, delta = tennis_detect_service.detect_color()
+                x_match, y_match, delta = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                # 判断移动方向
-                if is_match:
-                    # 抓取
-                    print("可以抓取了")
-
-                    # 抬臂，准备找目标字牌
-                elif delta:
-                    delta_x, delta_y = delta
-                else:
-                    # 图像没有目标
-                    pass
+                self.robo_action(x_match, y_match, delta)
 
         cv2.destroyAllWindows()
 
@@ -94,3 +88,21 @@ class RoboMasterService:
             self._is_need_stop = True
             logging.info("capture is waiting for stop")
             cv2.destroyAllWindows()
+
+    def robo_action(self, x_match, y_match, delta):
+        if not delta:
+            # 没有delta，表示画面没有网球，转动10°
+            self._robotic_ctrl.move_rotate(10)
+
+        if x_match and y_match:
+            logging.info("可以抓取")
+            self._robotic_ctrl.close_gripper()
+
+        if not x_match:
+            # 横向移动
+            delta_x = delta[0]
+            pass
+
+        if not y_match:
+            # 纵向移动
+            delta_y = delta[1]

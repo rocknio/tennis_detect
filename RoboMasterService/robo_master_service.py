@@ -72,7 +72,11 @@ class RoboMasterService:
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                self.robo_action(x_match, y_match, delta)
+                ret = self.robo_action(x_match, y_match, delta)
+                if ret:
+                    break
+
+        # TODO: 进行字牌目标识别过程
 
         cv2.destroyAllWindows()
 
@@ -93,17 +97,21 @@ class RoboMasterService:
         if not delta:
             # 没有delta，表示画面没有网球，转动10°
             self._robotic_ctrl.move_rotate(10)
+            return False
 
         if x_match and y_match:
             logging.info("可以抓取")
             self._robotic_ctrl.close_gripper()
+            return True
 
         if not x_match:
             # 横向移动
             delta_x = delta[0]
             self._robotic_ctrl.move_x(delta_x, 1)
+            return False
 
         if not y_match:
             # 纵向移动
             delta_y = delta[1]
             self._robotic_ctrl.move_y(delta_y, 1)
+            return False

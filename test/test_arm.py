@@ -10,7 +10,7 @@ class TestArm(unittest.TestCase):
 
     def setUp(self) -> None:
         self._robot = robot.Robot()
-        self._robot_conn = RoboticConn(self._robot)
+        self._robot_conn = RoboticConn(self._robot, '')
 
         self._robot_conn.connect_robo()
         self._arm = RoboticArm(self._robot_conn)

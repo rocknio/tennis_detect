@@ -9,10 +9,10 @@ from config_util.settings import SettingService
 
 
 class RoboticConn:
-    def __init__(self, robotic: robot):
+    def __init__(self, robotic: robot, sn):
         self.conn = None
         self.robot = robotic
-        self.stat = RoboMasterStats(f'{SettingService().settings.robot_master_sn}')
+        self.stat = RoboMasterStats(sn)
         self._address = None
 
     def connect_robo(self):

@@ -45,7 +45,7 @@ class RoboticController:
 
     def move_rotate(self, speed, direction=1, duration=None):
         if self._chassis:
-            self._chassis.move(x=(direction * speed))
+            self._chassis.move(z=(direction * speed))
             self.idle(duration, self.stop)
 
     def stop(self):

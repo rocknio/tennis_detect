@@ -1,4 +1,9 @@
 # -*- coding: utf-8 -*-
+import queue
+import threading
+import time
+
+from RoboMasterService.robo_master_control import RoboMasterControlService
 from camera_service.camera_utils import CameraService
 from config_util.config_service import show_color_setting
 from config_util.settings import SettingService
@@ -33,6 +38,7 @@ if __name__ == '__main__':
     init_logging()
 
     d = Manager().dict()
+    q = queue.Queue(maxsize=1000)
 
     # 启动设置界面
     p = Process(target=show_color_setting, args=('low', d))
@@ -40,6 +46,9 @@ if __name__ == '__main__':
 
     p1 = Process(target=show_color_setting, args=('high', d))
     p1.start()
+
+    # 等3秒，颜色调节窗口打开后，d才会有初始值
+    time.sleep(2)
 
     # 1、图片文件测试
     # svc = TennisDetectService([([0, 60, 100], [95, 255, 255])], './images/t1.jpg')
@@ -50,7 +59,10 @@ if __name__ == '__main__':
     # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
-    svc = RoboMasterService(d)
+    rb_ctrl = RoboMasterControlService(q, d)
+    rb_ctrl.start()
+
+    svc = RoboMasterService(d, q)
     svc.start_capture()
 
     p.join()

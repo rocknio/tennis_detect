@@ -146,9 +146,9 @@ class TennisDetectService(object):
         # res = cv2.bitwise_and(self._image, self._image, mask=mask)
 
         # 画出探测区域中心点
-        detect_zone_center = (self._cfg['detect_zone']['top_left']['y']
-                              + (self._cfg['detect_zone']['down_right']['y']
-                                 - self._cfg['detect_zone']['top_left']['y']) // 2,
+        detect_zone_center = (self._cfg['detect_zone']['down_right']['y']
+                              - (self._cfg['detect_zone']['down_right']['y']
+                                 - self._cfg['detect_zone']['top_left']['y']) // 2 // 2,
 
                               self._cfg['detect_zone']['top_left']['x']
                               + (self._cfg['detect_zone']['down_right']['x']

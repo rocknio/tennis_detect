@@ -1,20 +1,25 @@
 # -*- coding: utf-8 -*-
+import time
+
 import cv2
 import logging
 from robomaster import robot
 
-from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
-from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
 from tennis_detect_service.tennis_detect import TennisDetectService
 
 
 class RoboMasterService:
-    def __init__(self, cfg):
+    def __init__(self, cfg, q):
         self._cfg = cfg
+        self._q = q
         self._is_need_stop = False
         self._is_running = False
         self._robot = None
         self._camera = None
+        self._robotic_conn = None
+        self._robotic_ctrl = None
+        self._msg_interval = 0.5
+        self._last_msg_time = None
 
         try:
             # 初始化日志文件
@@ -26,19 +31,6 @@ class RoboMasterService:
             # 初始化相机
             self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
             self._camera = self._robot.camera
-
-            # 初始化控制连接
-            self._robotic_conn = RoboticConn(self._robot)
-            if self._robotic_conn.connect_robo() is False:
-                logging.fatal(f'connect to robot failed!')
-                self.release_robot()
-
-            # 初始化各模块
-            self._robotic_ctrl = RoboticController(self._robotic_conn)
-
-            # 初始化状态
-            self._robotic_ctrl.reset_arm()
-            self._robotic_ctrl.open_gripper()
         except Exception as err:
             self._camera = None
             self._robot.close()
@@ -48,6 +40,19 @@ class RoboMasterService:
         if self._robot:
             self._robot.close()
             self._robot = None
+
+    def check_msg_send(self):
+        current_time = round(time.time(), 1)
+
+        if not self._last_msg_time:
+            self._last_msg_time = current_time
+            return True
+
+        if current_time - self._last_msg_time > self._msg_interval:
+            self._last_msg_time = current_time
+            return True
+        else:
+            return False
 
     def start_capture(self):
         if self._camera is None:
@@ -72,11 +77,10 @@ class RoboMasterService:
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                ret = self.robo_action(x_match, y_match, delta)
-                if ret:
-                    break
+                if self.check_msg_send():
+                    self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
 
-        # TODO: 进行字牌目标识别过程
+            # TODO: 进行字牌目标识别过程
 
         cv2.destroyAllWindows()
 
@@ -92,26 +96,3 @@ class RoboMasterService:
             self._is_need_stop = True
             logging.info("capture is waiting for stop")
             cv2.destroyAllWindows()
-
-    def robo_action(self, x_match, y_match, delta):
-        if not delta:
-            # 没有delta，表示画面没有网球，转动10°
-            self._robotic_ctrl.move_rotate(10)
-            return False
-
-        if x_match and y_match:
-            logging.info("可以抓取")
-            self._robotic_ctrl.close_gripper()
-            return True
-
-        if not x_match:
-            # 横向移动
-            delta_x = delta[0]
-            self._robotic_ctrl.move_x(delta_x, 1)
-            return False
-
-        if not y_match:
-            # 纵向移动
-            delta_y = delta[1]
-            self._robotic_ctrl.move_y(delta_y, 1)
-            return False

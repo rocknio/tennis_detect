@@ -19,7 +19,6 @@ class TestAI(unittest.TestCase):
 
     def tearDown(self) -> None:
         self._robot_conn.disconnect_robo()
-        print(f"robot stat = {self._robot_conn.stat.ir}")
 
     def test_marker_set(self, color, dist):
         self._ai.marker_set(color, dist)

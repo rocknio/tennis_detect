@@ -5,6 +5,8 @@ import time
 
 from robomaster import robot
 
+from RoboMasterService.robo_master_ai_service import RoboMasterPushReceiverService
+from robo_master_protocol.AI_recognition.robotic_ai import RoboticAI
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
 
@@ -33,6 +35,10 @@ class RoboMasterControlService(threading.Thread):
         self._robotic_ctrl.expand_arm(1000, 0)
         self._robotic_ctrl.open_gripper()
 
+        # marker识别服务
+        self._marker_ai = RoboticAI(self._robotic_conn)
+        self._marker_ai.marker_set('red', 0.5)
+
     def release_robot(self):
         if self._robot:
             self._robot.close()
@@ -42,7 +48,12 @@ class RoboMasterControlService(threading.Thread):
         while True:
             try:
                 msg = self._q.get()
-                self.robo_action(msg['x_match'], msg['y_match'], msg['delta'])
+                if isinstance(msg, dict):
+                    # 图像识别消息
+                    self.robo_action(msg['x_match'], msg['y_match'], msg['delta'])
+                else:
+                    # marker识别消息
+                    pass
             except Exception as e:
                 logging.error(f"msg get exception = {e}")
 
@@ -62,6 +73,11 @@ class RoboMasterControlService(threading.Thread):
             time.sleep(1)
             self._robotic_ctrl.reset_arm()
             self._is_gripper_close = True
+
+            # 启动_marker识别过程
+            if self._marker_ai.marker_push_on():
+                ai_recv = RoboMasterPushReceiverService(self._q)
+                ai_recv.start()
             return True
 
         if not x_match:

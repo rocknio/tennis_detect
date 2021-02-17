@@ -1,12 +1,10 @@
 # -*- coding: utf-8 -*-
 import queue
-import threading
 import time
 
 from RoboMasterService.robo_master_control import RoboMasterControlService
 from camera_service.camera_utils import CameraService
 from config_util.config_service import show_color_setting
-from config_util.settings import SettingService
 from tennis_detect_service.tennis_detect import TennisDetectService
 from RoboMasterService.robo_master_service import RoboMasterService
 import logging
@@ -59,9 +57,11 @@ if __name__ == '__main__':
     # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
+    # robot运动控制线程
     rb_ctrl = RoboMasterControlService(q, d)
     rb_ctrl.start()
 
+    # robot摄像头，图像识别线程
     svc = RoboMasterService(d, q)
     svc.start_capture()
 

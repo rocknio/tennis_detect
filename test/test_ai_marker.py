@@ -8,7 +8,7 @@ from robo_master_protocol.AI_recognition.robotic_ai import RoboticAI
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 
 
-class TestArm(unittest.TestCase):
+class TestAI(unittest.TestCase):
 
     def setUp(self) -> None:
         self._robot = robot.Robot()

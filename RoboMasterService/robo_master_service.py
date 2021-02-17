@@ -80,8 +80,6 @@ class RoboMasterService:
                 if self.check_msg_send():
                     self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
 
-            # TODO: 进行字牌目标识别过程
-
         cv2.destroyAllWindows()
 
     def stop_capture(self):

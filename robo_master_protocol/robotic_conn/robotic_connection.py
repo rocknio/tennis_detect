@@ -5,7 +5,6 @@ from robomaster import robot
 
 from RoboMasterService.robo_master_stats import RoboMasterStats
 from robo_master_protocol.common.utils import check_robot_resp_ok
-from config_util.settings import SettingService
 
 
 class RoboticConn:

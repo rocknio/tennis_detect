@@ -5,6 +5,8 @@ import time
 from RoboMasterService.robo_master_control import RoboMasterControlService
 from camera_service.camera_utils import CameraService
 from config_util.config_service import show_color_setting
+from config_util.settings import SettingService
+from global_queue.global_queue import q
 from tennis_detect_service.tennis_detect import TennisDetectService
 from RoboMasterService.robo_master_service import RoboMasterService
 import logging
@@ -35,35 +37,43 @@ def init_logging():
 if __name__ == '__main__':
     init_logging()
 
-    d = Manager().dict()
-    q = queue.Queue(maxsize=1000)
+    # d = Manager().dict()
 
-    # 启动设置界面
-    p = Process(target=show_color_setting, args=('low', d))
-    p.start()
+    settings = SettingService()
+    d = {
+        'low_color': settings.settings['color_range']['low'],
+        'high_color': settings.settings['color_range']['high'],
+        'hsv_low': settings.settings['color_range']['hsv_low'],
+        'hsv_high': settings.settings['color_range']['hsv_high'], 'detect_zone': settings.settings['detect_zone'],
+        'limit_pixel': settings.settings['limit_pixel'], 'min_contour_area': settings.settings['min_contour_area'],
+        'robot_master_sn': settings.settings['robot_master_sn']}
 
-    p1 = Process(target=show_color_setting, args=('high', d))
-    p1.start()
-
-    # 等3秒，颜色调节窗口打开后，d才会有初始值
-    time.sleep(2)
+    # # 启动设置界面
+    # p = Process(target=show_color_setting, args=('low', d))
+    # p.start()
+    #
+    # p1 = Process(target=show_color_setting, args=('high', d))
+    # p1.start()
+    #
+    # # 等3秒，颜色调节窗口打开后，d才会有初始值
+    # time.sleep(2)
 
     # 1、图片文件测试
     # svc = TennisDetectService([([0, 60, 100], [95, 255, 255])], './images/t1.jpg')
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    svc = CameraService(0, d)
-    svc.start_capture()
+    # svc = CameraService(0, d)
+    # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
     # robot运动控制线程
-    # rb_ctrl = RoboMasterControlService(q, d)
-    # rb_ctrl.start()
-    #
-    # # robot摄像头，图像识别线程
-    # svc = RoboMasterService(d, q)
-    # svc.start_capture()
+    rb_ctrl = RoboMasterControlService(q, d)
+    rb_ctrl.start()
 
-    p.join()
-    p1.join()
+    # robot摄像头，图像识别线程
+    svc = RoboMasterService(d, q)
+    svc.start_capture()
+
+    # p.join()
+    # p1.join()

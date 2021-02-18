@@ -13,6 +13,7 @@ class RoboticAI:
 
         ret = self._robot_ctrl.robot_do_command(cmd)
         if check_robot_resp_ok(ret):
+            logging.info(f"cmd = {cmd}, SUCCESS")
             return True
         else:
             logging.error(f'{cmd} failed, resp = {ret}')
@@ -23,6 +24,7 @@ class RoboticAI:
 
         ret = self._robot_ctrl.robot_do_command(cmd)
         if check_robot_resp_ok(ret):
+            logging.info(f"cmd = {cmd}, SUCCESS")
             return True
         else:
             logging.error(f'{cmd} failed, resp = {ret}')

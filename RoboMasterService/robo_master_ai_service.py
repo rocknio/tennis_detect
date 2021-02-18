@@ -1,8 +1,6 @@
-import logging
 import socket
 import threading
 
-from RoboMasterService.robo_master_stats import RoboMasterStats
 from global_queue.global_queue import q
 
 

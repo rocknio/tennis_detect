@@ -13,6 +13,8 @@ def show_color_setting(window_name, cfg):
     settings = SettingService()
     cfg['low_color'] = settings.settings['color_range']['low']
     cfg['high_color'] = settings.settings['color_range']['high']
+    cfg['hsv_low'] = settings.settings['color_range']['hsv_low']
+    cfg['hsv_high'] = settings.settings['color_range']['hsv_high']
     cfg['detect_zone'] = settings.settings['detect_zone']
     cfg['limit_pixel'] = settings.settings['limit_pixel']
     cfg['min_contour_area'] = settings.settings['min_contour_area']

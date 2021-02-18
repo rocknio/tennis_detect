@@ -7,6 +7,14 @@ color_range:
     red: 255
     green: 255
     blue: 95
+  hsv_low:
+    - 29
+    - 90
+    - 90
+  hsv_high:
+    - 64
+    - 255
+    - 255
 detect_zone:
   down_right:
     x: 1000

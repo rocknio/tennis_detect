@@ -53,17 +53,17 @@ if __name__ == '__main__':
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    # svc = CameraService(0, d)
-    # svc.start_capture()
+    svc = CameraService(0, d)
+    svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
     # robot运动控制线程
-    rb_ctrl = RoboMasterControlService(q, d)
-    rb_ctrl.start()
-
-    # robot摄像头，图像识别线程
-    svc = RoboMasterService(d, q)
-    svc.start_capture()
+    # rb_ctrl = RoboMasterControlService(q, d)
+    # rb_ctrl.start()
+    #
+    # # robot摄像头，图像识别线程
+    # svc = RoboMasterService(d, q)
+    # svc.start_capture()
 
     p.join()
     p1.join()

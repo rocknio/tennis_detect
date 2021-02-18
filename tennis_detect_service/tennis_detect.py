@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+from typing import List, Tuple
+
 import cv2
 import logging
 import numpy as np
@@ -128,22 +130,62 @@ class TennisDetectService(object):
         y_match, delta_y = self.is_y_match(detect_center, dst_center)
         return x_match, y_match, (delta_x, delta_y)
 
-    def detect_color(self):
+    @staticmethod
+    def contour_analysis(cnt) -> Tuple[int, int]:
+        approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
+        area = cv2.contourArea(cnt)
+        return len(approx), area
+
+    def biggest_circle_cnt(self, cnts: List):
+        found_cnt = None
+        found_edges = 0
+        found_area = 0
+
+        for cnt in cnts:
+            edges, area = self.contour_analysis(cnt)
+            if edges > 8 \
+                    and 260 < area < 20000 \
+                    and edges > found_edges \
+                    and area > found_area:
+                found_edges = edges
+                found_area = area
+                found_cnt = cnt
+
+        return found_cnt
+
+    def detect_color_hsv(self):
         if self._image is None:
-            return None
+            return None, None, None
 
         delta = None
         x_match, y_match = False, False
 
-        lower = np.array([self._cfg['low_color']['blue'],
-                          self._cfg['low_color']['red'],
-                          self._cfg['low_color']['green']])
-        upper = np.array([self._cfg['high_color']['blue'],
-                          self._cfg['high_color']['red'],
-                          self._cfg['high_color']['green']])
+        processed = cv2.GaussianBlur(self._image, (11, 11), 0)
+        processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
 
-        mask = cv2.inRange(self._image, lower, upper)
-        # res = cv2.bitwise_and(self._image, self._image, mask=mask)
+        lower = tuple(self._cfg['hsv_low'])
+        upper = tuple(self._cfg['hsv_high'])
+        mask = cv2.inRange(processed, lower, upper)
+        mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
+        cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        ball_cnt = self.biggest_circle_cnt(cnts)
+        if ball_cnt is not None:
+            (x, y), pixel_radius = cv2.minEnclosingCircle(ball_cnt)
+            cv2.circle(self._image, (int(x), int(y)), int(pixel_radius), (0, 255, 0), 2)
+            cv2.circle(self._image, (int(x), int(y)), 1, (0, 0, 255), 2)
+
+        cv2.imshow("result", self._image)
+
+        return None, None, None
+
+    def detect_color(self, hsv=True):
+        if self._image is None:
+            return None, None, None
+
+        delta = None
+        x_match, y_match = False, False
+        is_found = False
 
         # 画出探测区域中心点
         detect_zone_center = (self._cfg['detect_zone']['down_right']['y']
@@ -167,8 +209,36 @@ class TennisDetectService(object):
                       (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
                       (0, 255, 0), 2)
 
-        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        c, is_found = self.find_max_contours(contours)
+        if hsv:
+            processed = cv2.GaussianBlur(self._image, (11, 11), 0)
+            processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
+
+            lower = tuple(self._cfg['hsv_low'])
+            upper = tuple(self._cfg['hsv_high'])
+            mask = cv2.inRange(processed, lower, upper)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
+            cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            c = self.biggest_circle_cnt(cnts)
+            if c is not None:
+                (x, y), pixel_radius = cv2.minEnclosingCircle(c)
+                cv2.circle(self._image, (int(x), int(y)), int(pixel_radius), (0, 255, 0), 2)
+                cv2.circle(self._image, (int(x), int(y)), 1, (0, 0, 255), 2)
+                is_found = True
+        else:
+            lower = np.array([self._cfg['low_color']['blue'],
+                              self._cfg['low_color']['red'],
+                              self._cfg['low_color']['green']])
+            upper = np.array([self._cfg['high_color']['blue'],
+                              self._cfg['high_color']['red'],
+                              self._cfg['high_color']['green']])
+
+            mask = cv2.inRange(self._image, lower, upper)
+            # res = cv2.bitwise_and(self._image, self._image, mask=mask)
+
+            contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+            c, is_found = self.find_max_contours(contours)
+
         if is_found:
             # 画出被探测物体区域及中心点
             x, y, w, h = cv2.boundingRect(c)

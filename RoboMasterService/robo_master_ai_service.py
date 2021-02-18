@@ -11,7 +11,7 @@ class RoboMasterPushReceiverService(threading.Thread):
 
     def run(self):
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as conn:
-            # 绑定 IP 广播端口
+            # 绑定 marker udp 推送端口
             conn.bind(('0.0.0.0', 40924))
 
             while True:

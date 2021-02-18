@@ -38,10 +38,10 @@ class RoboMasterControlService(threading.Thread):
         # marker识别服务
         self._marker_ai = RoboticAI(self._robotic_conn)
         self._marker_ai.marker_set('red', 0.5)
-        self._marker_ai.marker_push_on()
-
-        # 启动接受marker ai识别推送线程
-        RoboMasterPushReceiverService().start()
+        # self._marker_ai.marker_push_on()
+        #
+        # # 启动接受marker ai识别推送线程
+        # RoboMasterPushReceiverService().start()
 
     def release_robot(self):
         if self._robot:
@@ -80,7 +80,7 @@ class RoboMasterControlService(threading.Thread):
 
             # 启动_marker识别过程
             if self._marker_ai.marker_push_on():
-                ai_recv = RoboMasterPushReceiverService(self._q)
+                ai_recv = RoboMasterPushReceiverService()
                 ai_recv.start()
             return True
 

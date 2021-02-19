@@ -40,7 +40,7 @@ class CameraService:
                 break
             else:
                 tennis_detect_service = TennisDetectService(cap_frame=frame, config=self._cfg)
-                _, _, _ = tennis_detect_service.detect_color(hsv=False)
+                _, _, _ = tennis_detect_service.detect_color()
                 if cv2.waitKey(1) == ord('q'):
                     break
 

@@ -1,3 +1,4 @@
+import logging
 import socket
 import threading
 
@@ -20,4 +21,5 @@ class RoboMasterPushReceiverService(threading.Thread):
                 if resp[-1:] == ';':
                     resp = resp[:-1]
 
+                logging.info(f"RECV RB AI Push: {resp}")
                 self._q.put(resp)

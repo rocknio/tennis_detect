@@ -5,10 +5,9 @@ import time
 
 from robomaster import robot
 
-from RoboMasterService.robo_master_ai_service import RoboMasterPushReceiverService
-from robo_master_protocol.AI_recognition.robotic_ai import RoboticAI
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
+from step_const.step_const import current_step, STEP_SHOT, STEP_TENNIS
 
 
 class RoboMasterControlService(threading.Thread):
@@ -19,6 +18,7 @@ class RoboMasterControlService(threading.Thread):
         self._cfg = cfg
         self._robot = robot.Robot()
         self._is_gripper_close = False
+        self._current_step = current_step
 
         # 初始化控制连接
         self._robotic_conn = RoboticConn(self._robot, self._cfg['robot_master_sn'])
@@ -36,8 +36,8 @@ class RoboMasterControlService(threading.Thread):
         self._robotic_ctrl.open_gripper()
 
         # marker识别服务
-        self._marker_ai = RoboticAI(self._robotic_conn)
-        self._marker_ai.marker_set('red', 0.5)
+        # self._marker_ai = RoboticAI(self._robotic_conn)
+        # self._marker_ai.marker_set('red', 0.5)
         # self._marker_ai.marker_push_on()
         #
         # # 启动接受marker ai识别推送线程
@@ -61,10 +61,13 @@ class RoboMasterControlService(threading.Thread):
             except Exception as e:
                 logging.error(f"msg get exception = {e}")
 
-    def robo_action(self, x_match, y_match, delta):
-        if self._is_gripper_close:
-            return
+    def step_change(self):
+        if self._current_step == STEP_SHOT:
+            self._current_step = STEP_TENNIS
+        else:
+            self._current_step = STEP_SHOT
 
+    def robo_action(self, x_match, y_match, delta):
         if not delta:
             # 没有delta，表示画面没有网球，转动10°
             print("转30度")
@@ -78,10 +81,7 @@ class RoboMasterControlService(threading.Thread):
             self._robotic_ctrl.reset_arm()
             self._is_gripper_close = True
 
-            # 启动_marker识别过程
-            if self._marker_ai.marker_push_on():
-                ai_recv = RoboMasterPushReceiverService()
-                ai_recv.start()
+            self.step_change()
             return True
 
         if not x_match:

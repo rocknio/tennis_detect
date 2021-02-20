@@ -6,11 +6,7 @@ import logging
 import numpy as np
 from enum import Enum
 
-
-class DetectShape(Enum):
-    circle = "CIRCLE"
-    rect = "RECT"
-    triangle = "TRIANGLE"
+from step_const.step_const import current_step, STEP_TENNIS
 
 
 class Colors(Enum):
@@ -34,6 +30,8 @@ class TennisDetectService(object):
                 self._image = None
         elif cap_frame is not None:
             self._image = cap_frame
+
+        self._current_step = current_step
 
     def is_x_match(self, detect_center, dst_center):
         detect_x = detect_center[0]
@@ -72,12 +70,7 @@ class TennisDetectService(object):
 
         return found_cnt
 
-    def detect_color(self, hsv=True):
-        if self._image is None:
-            return None, None, None
-
-        delta = None
-        x_match, y_match = False, False
+    def draw_detect_zone(self):
         # 画出探测区域中心点
         detect_zone_center = (self._cfg['detect_zone']['down_right']['y']
                               - (self._cfg['detect_zone']['down_right']['y']
@@ -100,29 +93,52 @@ class TennisDetectService(object):
                       (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
                       (0, 255, 0), 2)
 
-        if hsv:
+        return detect_zone_center
+
+    def detect_color(self, hsv=True):
+        if self._image is None:
+            return None, None, None
+
+        delta = None
+        x_match, y_match = False, False
+
+        detect_zone_center = self.draw_detect_zone()
+
+        if self._current_step == STEP_TENNIS:
+            if hsv:
+                processed = cv2.GaussianBlur(self._image, (11, 11), 0)
+                processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
+
+                lower = tuple(self._cfg['hsv_low'])
+                upper = tuple(self._cfg['hsv_high'])
+                mask = cv2.inRange(processed, lower, upper)
+                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
+                cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                c = self.biggest_circle_cnt(cnts)
+            else:
+                lower = np.array([self._cfg['low_color']['blue'],
+                                  self._cfg['low_color']['red'],
+                                  self._cfg['low_color']['green']])
+                upper = np.array([self._cfg['high_color']['blue'],
+                                  self._cfg['high_color']['red'],
+                                  self._cfg['high_color']['green']])
+
+                mask = cv2.inRange(self._image, lower, upper)
+
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                c = self.biggest_circle_cnt(contours)
+        else:
             processed = cv2.GaussianBlur(self._image, (11, 11), 0)
             processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
 
-            lower = tuple(self._cfg['hsv_low'])
-            upper = tuple(self._cfg['hsv_high'])
+            lower = tuple(self._cfg['shot_hsv_low'])
+            upper = tuple(self._cfg['shot_hsv_high'])
             mask = cv2.inRange(processed, lower, upper)
             mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
             cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
 
             c = self.biggest_circle_cnt(cnts)
-        else:
-            lower = np.array([self._cfg['low_color']['blue'],
-                              self._cfg['low_color']['red'],
-                              self._cfg['low_color']['green']])
-            upper = np.array([self._cfg['high_color']['blue'],
-                              self._cfg['high_color']['red'],
-                              self._cfg['high_color']['green']])
-
-            mask = cv2.inRange(self._image, lower, upper)
-
-            contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-            c = self.biggest_circle_cnt(contours)
 
         if c is not None:
             # 画出被探测物体区域及中心点

@@ -8,13 +8,22 @@ color_range:
     green: 255
     blue: 95
   hsv_low:
-    - 29
-    - 90
-    - 90
+    - 0.1137
+    - 0.3529
+    - 0.3529
   hsv_high:
-    - 64
-    - 255
-    - 255
+    - 0.2009
+    - 1
+    - 1
+marker_range:
+  hsv_low:
+    - 0
+    - 0.26
+    - 0.22
+  hsv_high:
+    - 0
+    - 1
+    - 1
 detect_zone:
   down_right:
     x: 1000

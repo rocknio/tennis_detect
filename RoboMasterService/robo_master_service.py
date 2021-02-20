@@ -77,8 +77,8 @@ class RoboMasterService:
                 if cv2.waitKey(1) == ord('q'):
                     break
 
-                # if self.check_msg_send():
-                #     self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
+                if self.check_msg_send():
+                    self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
 
         cv2.destroyAllWindows()
 

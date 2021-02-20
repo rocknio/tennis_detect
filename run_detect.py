@@ -40,13 +40,18 @@ if __name__ == '__main__':
     # d = Manager().dict()
 
     settings = SettingService()
-    d = {
+    cfg = {
         'low_color': settings.settings['color_range']['low'],
         'high_color': settings.settings['color_range']['high'],
-        'hsv_low': settings.settings['color_range']['hsv_low'],
-        'hsv_high': settings.settings['color_range']['hsv_high'], 'detect_zone': settings.settings['detect_zone'],
-        'limit_pixel': settings.settings['limit_pixel'], 'min_contour_area': settings.settings['min_contour_area'],
-        'robot_master_sn': settings.settings['robot_master_sn']}
+        'hsv_low': [x * 255 for x in settings.settings['color_range']['hsv_low']],
+        'hsv_high': [x * 255 for x in settings.settings['color_range']['hsv_high']],
+        'detect_zone': settings.settings['detect_zone'],
+        'limit_pixel': settings.settings['limit_pixel'],
+        'min_contour_area': settings.settings['min_contour_area'],
+        'robot_master_sn': settings.settings['robot_master_sn'],
+        'shot_hsv_low': [x * 255 for x in settings.settings['marker_range']['hsv_low']],
+        'shot_hsv_high': [x * 255 for x in settings.settings['marker_range']['hsv_high']]
+    }
 
     # # 启动设置界面
     # p = Process(target=show_color_setting, args=('low', d))
@@ -63,16 +68,16 @@ if __name__ == '__main__':
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    # svc = CameraService(0, d)
+    # svc = CameraService(0, cfg)
     # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
     # robot运动控制线程
-    rb_ctrl = RoboMasterControlService(q, d)
+    rb_ctrl = RoboMasterControlService(q, cfg)
     rb_ctrl.start()
 
     # robot摄像头，图像识别线程
-    svc = RoboMasterService(d, q)
+    svc = RoboMasterService(cfg, q)
     svc.start_capture()
 
     # p.join()

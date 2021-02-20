@@ -68,8 +68,8 @@ if __name__ == '__main__':
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    svc = CameraService(0, cfg)
-    svc.start_capture()
+    # svc = CameraService(0, cfg)
+    # svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
     # robot运动控制线程

@@ -1,5 +1,3 @@
-from enum import Enum
-
 STEP_TENNIS = "tennis"
 STEP_SHOT = "shot"
 

@@ -3,8 +3,9 @@ import time
 
 import cv2
 import logging
-from robomaster import robot
+# from robomaster import robot
 
+import global_var.robotic_ip
 from tennis_detect_service.tennis_detect import TennisDetectService
 
 
@@ -14,7 +15,6 @@ class RoboMasterService:
         self._q = q
         self._is_need_stop = False
         self._is_running = False
-        self._robot = None
         self._camera = None
         self._robotic_conn = None
         self._robotic_ctrl = None
@@ -26,20 +26,30 @@ class RoboMasterService:
             # robomaster.enable_logging_to_file()
 
             # 初始化
-            self._robot = robot.Robot()
+            # self._robot = robot.Robot()
 
             # 初始化相机
-            self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
-            self._camera = self._robot.camera
+            # self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
+            # self._camera = self._robot.camera
+
+            # 等待连接上robot
+            while True:
+                if not global_var.robotic_ip.robotic_host:
+                    continue
+
+                self._camera = cv2.VideoCapture(f'tcp://{global_var.robotic_ip.robotic_host}:40921')
+                assert self._camera.isOpened(), 'failed to connect to video stream'
+                self._camera.set(cv2.CAP_PROP_BUFFERSIZE, 4)
         except Exception as err:
-            self._camera = None
-            self._robot.close()
+            if self._camera:
+                self._camera.release()
             logging.error(f"exception: {err}")
 
     def release_robot(self):
-        if self._robot:
-            self._robot.close()
-            self._robot = None
+        if self._camera:
+            self._camera.release()
+
+        cv2.destroyAllWindows()
 
     def check_msg_send(self):
         current_time = round(time.time(), 1)
@@ -60,17 +70,18 @@ class RoboMasterService:
             return
 
         self._is_running = True
-        self._camera.start_video_stream(display=False)
         while True:
             if self._is_need_stop:
                 logging.info("capture is stopped!")
                 self._is_running = False
                 self._is_need_stop = False
-                self._camera.stop_video_stream()
                 self.release_robot()
                 break
 
-            img = self._camera.read_cv2_image(strategy='newest')
+            ok, img = self._camera.read()
+            if not ok:
+                break
+
             if img is not None:
                 tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
                 x_match, y_match, delta = tennis_detect_service.detect_color()
@@ -80,7 +91,7 @@ class RoboMasterService:
                 if self.check_msg_send():
                     self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
 
-        cv2.destroyAllWindows()
+        self.release_robot()
 
     def stop_capture(self):
         if not self._is_running:

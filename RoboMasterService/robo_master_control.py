@@ -3,11 +3,11 @@ import logging
 import threading
 import time
 
-from robomaster import robot
+# from robomaster import robot
 
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
-from step_const.step_const import current_step, STEP_SHOT, STEP_TENNIS
+from global_var.step_const import current_step, STEP_SHOT, STEP_TENNIS
 
 
 class RoboMasterControlService(threading.Thread):
@@ -16,15 +16,15 @@ class RoboMasterControlService(threading.Thread):
         super().__init__()
         self._q = q
         self._cfg = cfg
-        self._robot = robot.Robot()
+        # self._robot = robot.Robot()
         self._is_gripper_close = False
         self._current_step = current_step
 
         # 初始化控制连接
-        self._robotic_conn = RoboticConn(self._robot, self._cfg['robot_master_sn'])
+        self._robotic_conn = RoboticConn()
         if self._robotic_conn.connect_robo() is False:
             logging.fatal(f'connect to robot failed!')
-            self.release_robot()
+            # self.release_robot()
 
         # 初始化各模块
         self._robotic_ctrl = RoboticController(self._robotic_conn)
@@ -43,10 +43,10 @@ class RoboMasterControlService(threading.Thread):
         # # 启动接受marker ai识别推送线程
         # RoboMasterPushReceiverService().start()
 
-    def release_robot(self):
-        if self._robot:
-            self._robot.close()
-            self._robot = None
+    # def release_robot(self):
+    #     if self._robot:
+    #         self._robot.close()
+    #         self._robot = None
 
     def run(self):
         while True:

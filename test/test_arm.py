@@ -1,6 +1,6 @@
 import unittest
 
-from robomaster import robot
+# from robomaster import robot
 
 from robo_master_protocol.arm.robotic_arm import RoboticArm
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
@@ -9,15 +9,15 @@ from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 class TestArm(unittest.TestCase):
 
     def setUp(self) -> None:
-        self._robot = robot.Robot()
-        self._robot_conn = RoboticConn(self._robot, '')
+        # self._robot = robot.Robot()
+        self._robot_conn = RoboticConn()
 
         self._robot_conn.connect_robo()
         self._arm = RoboticArm(self._robot_conn)
 
     def tearDown(self) -> None:
         self._robot_conn.disconnect_robo()
-        print(f"robot stat = {self._robot_conn.stat.robotic_arm_pos}")
+        # print(f"robot stat = {self._robot_conn.stat.robotic_arm_pos}")
 
     def test_arm_recenter(self):
         self.assertEqual(self._arm.recenter(), True)

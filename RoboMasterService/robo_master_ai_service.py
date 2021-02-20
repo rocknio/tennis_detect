@@ -2,7 +2,7 @@ import logging
 import socket
 import threading
 
-from global_queue.global_queue import q
+from global_var.global_queue import q
 
 
 class RoboMasterPushReceiverService(threading.Thread):

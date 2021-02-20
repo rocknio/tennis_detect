@@ -1,9 +1,9 @@
 import unittest
 
-from robomaster import robot
+# from robomaster import robot
 
 from RoboMasterService.robo_master_ai_service import RoboMasterPushReceiverService
-from global_queue.global_queue import q
+from global_var.global_queue import q
 from robo_master_protocol.AI_recognition.robotic_ai import RoboticAI
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 
@@ -11,8 +11,8 @@ from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 class TestAI(unittest.TestCase):
 
     def setUp(self) -> None:
-        self._robot = robot.Robot()
-        self._robot_conn = RoboticConn(self._robot, '')
+        # self._robot = robot.Robot()
+        self._robot_conn = RoboticConn()
 
         self._robot_conn.connect_robo()
         self._ai = RoboticAI(self._robot_conn)

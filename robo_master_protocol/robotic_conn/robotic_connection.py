@@ -1,17 +1,18 @@
 import logging
 import socket
 
-from robomaster import robot
+# from robomaster import robot
 
-from RoboMasterService.robo_master_stats import RoboMasterStats
+import global_var.robotic_ip
+# from RoboMasterService.robo_master_stats import RoboMasterStats
 from robo_master_protocol.common.utils import check_robot_resp_ok
 
 
 class RoboticConn:
-    def __init__(self, robotic: robot, sn):
+    def __init__(self):
         self.conn = None
-        self.robot = robotic
-        self.stat = RoboMasterStats(sn)
+        # self.robot = robotic
+        # self.stat = RoboMasterStats(sn)
         self._address = None
 
     def connect_robo(self):
@@ -26,6 +27,9 @@ class RoboticConn:
         # 等待接收机器人广播数据
         data, ip_str = ip_sock.recvfrom(1024)
         host = ip_str[0]
+
+        # 设置全局rb ip
+        global_var.robotic_ip.robotic_host = host
 
         # 设置机器人连接地址端口
         self._address = (host, int(40923))

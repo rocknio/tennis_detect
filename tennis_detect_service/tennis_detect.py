@@ -6,7 +6,7 @@ import logging
 import numpy as np
 from enum import Enum
 
-from step_const.step_const import current_step, STEP_TENNIS
+from global_var.step_const import current_step, STEP_TENNIS
 
 
 class Colors(Enum):

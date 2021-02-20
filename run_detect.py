@@ -6,7 +6,7 @@ from RoboMasterService.robo_master_control import RoboMasterControlService
 from camera_service.camera_utils import CameraService
 from config_util.config_service import show_color_setting
 from config_util.settings import SettingService
-from global_queue.global_queue import q
+from global_var.global_queue import q
 from tennis_detect_service.tennis_detect import TennisDetectService
 from RoboMasterService.robo_master_service import RoboMasterService
 import logging
@@ -68,8 +68,8 @@ if __name__ == '__main__':
     # svc.detect_color()
 
     # 2、电脑摄像头采集图像测试
-    # svc = CameraService(0, cfg)
-    # svc.start_capture()
+    svc = CameraService(0, cfg)
+    svc.start_capture()
 
     # 3、RoboMaster摄像头采集图像
     # robot运动控制线程

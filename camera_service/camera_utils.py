@@ -45,6 +45,7 @@ class CameraService:
                     break
 
         cv2.destroyAllWindows()
+        exit()
 
     def stop_capture(self):
         if not self._is_running:

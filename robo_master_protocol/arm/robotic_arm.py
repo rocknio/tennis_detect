@@ -21,10 +21,6 @@ class RoboticArm:
 
     def current_pos(self):
         pos = self._robot_ctrl.robot_do_command('robotic_arm position ?')
-        self._robot_ctrl.stat.robotic_arm_pos = {
-            'x': pos[0],
-            'y': pos[1]
-        }
         return True
 
     def arm_move(self, x: float, y: float):
@@ -32,9 +28,6 @@ class RoboticArm:
 
         ret = self._robot_ctrl.robot_do_command(cmd)
         if check_robot_resp_ok(ret):
-            self._robot_ctrl.stat.robotic_arm_pos['x'] = x
-            self._robot_ctrl.stat.robotic_arm_pos['y'] = y
-
             return True
         else:
             logging.error(f'robotic_arm moveto {x}:{y} failed, resp = {ret}')

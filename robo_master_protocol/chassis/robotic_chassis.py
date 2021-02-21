@@ -13,15 +13,6 @@ class RoboticChassis:
 
         ret = self._robot_ctrl.robot_do_command(cmd)
         if check_robot_resp_ok(ret):
-            if x:
-                self._robot_ctrl.stat.speed['x'] = x
-
-            if y:
-                self._robot_ctrl.stat.speed['y'] = y
-
-            if z:
-                self._robot_ctrl.stat.speed['z'] = z
-
             return True
         else:
             logging.error(f'robotic speed move {x}:{y}:{z} failed, resp = {ret}')

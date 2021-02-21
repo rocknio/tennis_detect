@@ -6,8 +6,6 @@ import logging
 import numpy as np
 from enum import Enum
 
-from global_var.step_const import current_step, STEP_TENNIS
-
 
 class Colors(Enum):
     red = (0, 0, 255)
@@ -30,8 +28,6 @@ class TennisDetectService(object):
                 self._image = None
         elif cap_frame is not None:
             self._image = cap_frame
-
-        self._current_step = current_step
 
     def is_x_match(self, detect_center, dst_center):
         detect_x = detect_center[0]
@@ -95,7 +91,7 @@ class TennisDetectService(object):
 
         return detect_zone_center
 
-    def detect_color(self, hsv=True):
+    def detect_color(self, step, hsv=True):
         if self._image is None:
             return None, None, None
 
@@ -104,7 +100,7 @@ class TennisDetectService(object):
 
         detect_zone_center = self.draw_detect_zone()
 
-        if self._current_step == STEP_TENNIS:
+        if step == 1:
             if hsv:
                 processed = cv2.GaussianBlur(self._image, (11, 11), 0)
                 processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
@@ -161,5 +157,5 @@ class TennisDetectService(object):
             text = f'x_match = {x_match} and y_match = {y_match}, delta = {delta}'
             cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
 
-        cv2.imshow("result", self._image)
+        # cv2.imshow("result", self._image)
         return x_match, y_match, delta

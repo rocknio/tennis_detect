@@ -27,6 +27,7 @@ class CameraService:
             return
 
         self._is_running = True
+        tennis_detect_service = TennisDetectService(config=self._cfg)
         while True:
             if self._is_need_stop:
                 logging.info("capture is stopped!")
@@ -39,8 +40,8 @@ class CameraService:
                 logging.error("capture read failed")
                 break
             else:
-                tennis_detect_service = TennisDetectService(cap_frame=frame, config=self._cfg)
-                _, _, _ = tennis_detect_service.detect_color()
+
+                _, _, _ = tennis_detect_service.detect_color(frame, 2)
                 if cv2.waitKey(1) == ord('q'):
                     break
 

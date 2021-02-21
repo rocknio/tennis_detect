@@ -34,5 +34,5 @@ detect_zone:
 limit_pixel:
   x: 30
   y: 30
-min_contour_area: 50
+min_contour_area: 200
 robot_master_sn: 3JKDH2T001KK23

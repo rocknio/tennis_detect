@@ -5,6 +5,7 @@ import time
 
 from enum import Enum
 
+from global_var.global_queue import detect_q
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
 from tennis_detect_service.tennis_detect import TennisDetectService
@@ -20,9 +21,17 @@ class RoboMasterControlService(threading.Thread):
         # 初始化
         super().__init__()
         self._q = q
+        self._detect_q = detect_q
         self._cfg = cfg
+        self._is_x_match = False
+        self._is_y_match = False
+        self._x_return_count = 0
+        self._y_return_count = 0
         self._is_gripper_close = False
         self._step = Step.tennis.value
+
+        # self._is_gripper_close = True
+        # self._step = Step.shot.value
 
         # 初始化控制连接
         self._robotic_conn = RoboticConn()
@@ -45,18 +54,58 @@ class RoboMasterControlService(threading.Thread):
         else:
             self._step = Step.shot.value
 
+    def reset_match(self):
+        self._is_x_match = False
+        self._is_y_match = False
+
+        self._x_return_count, self._y_return_count = 0, 0
+
     def run(self):
         while True:
             try:
                 img = self._q.get()
-                # if isinstance(msg, dict):
-                #     # 图像识别消息
-                #     self.robo_action(msg['x_match'], msg['y_match'], msg['delta'])
+
                 tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
-                x_match, y_match, delta = tennis_detect_service.detect_color(self._step)
-                self.robo_action(x_match, y_match, delta)
+                x_match, y_match, delta, c = tennis_detect_service.detect_color(self._step)
+
+                # if x_match and y_match:
+                #     self.do_release()
+
+                if self.robo_action(x_match, y_match, delta) and self._step == Step.tennis.value:
+                    break
+
+                self._detect_q.put({
+                    'x_match': x_match,
+                    'y_match': y_match,
+                    'delta': delta,
+                    'c': c,
+                    'step': self._step
+                })
             except Exception as e:
                 logging.error(f"msg get exception = {e}")
+
+        exit()
+
+    def do_cap(self):
+        self._robotic_ctrl.close_gripper()
+        time.sleep(1)
+        self._robotic_ctrl.reset_arm()
+        self._is_gripper_close = True
+
+        self.step_change()
+        self.reset_match()
+
+    def do_release(self):
+        self._robotic_ctrl.expand_arm(0, 1000)
+        time.sleep(0.5)
+        self._robotic_ctrl.move_y(0.2, duration=0.5)
+        time.sleep(0.5)
+        self._robotic_ctrl.expand_arm(300, 0)
+        time.sleep(0.5)
+        self._robotic_ctrl.open_gripper()
+        self._is_gripper_close = False
+        self.step_change()
+        self.reset_match()
 
     def robo_action(self, x_match, y_match, delta):
         if not delta:
@@ -68,31 +117,35 @@ class RoboMasterControlService(threading.Thread):
         if x_match and y_match:
             if not self._is_gripper_close and self._step == Step.tennis.value:
                 logging.info("可以抓取")
-                self._robotic_ctrl.close_gripper()
-                time.sleep(1)
-                self._robotic_ctrl.reset_arm()
-                self._is_gripper_close = True
-
-                self.step_change()
+                self.do_cap()
             else:
                 logging.info("可以释放")
+                self.do_release()
             return True
 
         if not x_match:
-            # 转向
-            delta_x = delta[0]
-            if delta_x > 0:
-                direction = -1
+            if self._is_x_match and self._x_return_count <= 5:
+                self._x_return_count += 1
             else:
-                direction = 1
-            self._robotic_ctrl.move_rotate(10, direction=direction, duration=0.5)
-            return False
+                # 转向
+                delta_x = delta[0]
+                if delta_x > 0:
+                    direction = -1
+                else:
+                    direction = 1
+                self._robotic_ctrl.move_rotate(10, direction=direction, duration=0.5)
+        else:
+            self._is_x_match = True
 
         if not y_match:
-            # 纵向移动
-            delta_y = delta[1]
-            if delta_y < 0:
-                return
+            if self._is_y_match and self._y_return_count <= 5:
+                self._y_return_count += 1
+            else:
+                # 纵向移动
+                delta_y = delta[1]
+                if delta_y < 0:
+                    return
 
-            self._robotic_ctrl.move_y(0.1, duration=0.5)
-            return False
+                self._robotic_ctrl.move_y(0.1, duration=0.1)
+        else:
+            self._is_y_match = True

@@ -46,6 +46,12 @@ class TennisDetectService(object):
         y_match, delta_y = self.is_y_match(detect_center, dst_center)
         return x_match, y_match, (delta_x, delta_y)
 
+    def marker_is_match(self, detect_center, dst_center):
+        _, _, delta = self.is_match(detect_center, dst_center)
+        x_match = 80 > abs(abs(delta[0]) - 100)
+        y_match = 50 > abs(abs(delta[1]) - 200)
+        return x_match, y_match, delta
+
     @staticmethod
     def contour_analysis(cnt) -> Tuple[int, int]:
         approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
@@ -93,7 +99,7 @@ class TennisDetectService(object):
 
     def detect_color(self, step, hsv=True):
         if self._image is None:
-            return None, None, None
+            return None, None, None, None
 
         delta = None
         x_match, y_match = False, False
@@ -141,21 +147,27 @@ class TennisDetectService(object):
             x, y, w, h = cv2.boundingRect(c)
             center = (x + w // 2, y + h // 2)
 
-            x_match, y_match, delta = self.is_match(center, detect_zone_center)
+            if step == 1:
+                x_match, y_match, delta = self.is_match(center, detect_zone_center)
+            else:
+                x_match, y_match, delta = self.marker_is_match(center, detect_zone_center)
+
             if x_match and y_match:
                 center_color = Colors.green.value
             else:
                 center_color = Colors.red.value
 
-            # cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
-            # cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
-            (x, y), pixel_radius = cv2.minEnclosingCircle(c)
-            cv2.circle(self._image, (int(x), int(y)), int(pixel_radius), center_color, 2)
-            cv2.circle(self._image, (int(x), int(y)), 1, center_color, 2)
+            if step == 2:
+                cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
+                cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
+            else:
+                (x, y), pixel_radius = cv2.minEnclosingCircle(c)
+                cv2.circle(self._image, (int(x), int(y)), int(pixel_radius), center_color, 2)
+                cv2.circle(self._image, (int(x), int(y)), 1, center_color, 2)
 
             # 返回值打印在图像上
             text = f'x_match = {x_match} and y_match = {y_match}, delta = {delta}'
             cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
 
         # cv2.imshow("result", self._image)
-        return x_match, y_match, delta
+        return x_match, y_match, delta, c

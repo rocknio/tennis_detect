@@ -1,17 +1,14 @@
 # -*- coding: utf-8 -*-
-import queue
-import time
-
 from RoboMasterService.robo_master_control import RoboMasterControlService
 from camera_service.camera_utils import CameraService
-from config_util.config_service import show_color_setting
+# from config_util.config_service import show_color_setting
 from config_util.settings import SettingService
 from global_var.global_queue import q
-from tennis_detect_service.tennis_detect import TennisDetectService
+# from tennis_detect_service.tennis_detect import TennisDetectService
 from RoboMasterService.robo_master_service import RoboMasterService
 import logging
 import logging.handlers
-from multiprocessing import Process, Manager
+# from multiprocessing import Process, Manager
 
 
 def init_logging():

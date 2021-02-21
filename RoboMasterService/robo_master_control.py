@@ -3,11 +3,16 @@ import logging
 import threading
 import time
 
-# from robomaster import robot
+from enum import Enum
 
 from robo_master_protocol.robotic_conn.robotic_connection import RoboticConn
 from robo_master_protocol.robotic_ctrl.robotic_control import RoboticController
-from global_var.step_const import current_step, STEP_SHOT, STEP_TENNIS
+from tennis_detect_service.tennis_detect import TennisDetectService
+
+
+class Step(Enum):
+    tennis = 1
+    shot = 2
 
 
 class RoboMasterControlService(threading.Thread):
@@ -16,15 +21,14 @@ class RoboMasterControlService(threading.Thread):
         super().__init__()
         self._q = q
         self._cfg = cfg
-        # self._robot = robot.Robot()
         self._is_gripper_close = False
-        self._current_step = current_step
+        self._step = Step.tennis.value
 
         # 初始化控制连接
         self._robotic_conn = RoboticConn()
         if self._robotic_conn.connect_robo() is False:
             logging.fatal(f'connect to robot failed!')
-            # self.release_robot()
+            exit()
 
         # 初始化各模块
         self._robotic_ctrl = RoboticController(self._robotic_conn)
@@ -35,37 +39,24 @@ class RoboMasterControlService(threading.Thread):
         self._robotic_ctrl.expand_arm(1000, 0)
         self._robotic_ctrl.open_gripper()
 
-        # marker识别服务
-        # self._marker_ai = RoboticAI(self._robotic_conn)
-        # self._marker_ai.marker_set('red', 0.5)
-        # self._marker_ai.marker_push_on()
-        #
-        # # 启动接受marker ai识别推送线程
-        # RoboMasterPushReceiverService().start()
-
-    # def release_robot(self):
-    #     if self._robot:
-    #         self._robot.close()
-    #         self._robot = None
+    def step_change(self):
+        if self._step == Step.shot.value:
+            self._step = Step.tennis.value
+        else:
+            self._step = Step.shot.value
 
     def run(self):
         while True:
             try:
-                msg = self._q.get()
-                if isinstance(msg, dict):
-                    # 图像识别消息
-                    self.robo_action(msg['x_match'], msg['y_match'], msg['delta'])
-                else:
-                    # marker识别消息
-                    pass
+                img = self._q.get()
+                # if isinstance(msg, dict):
+                #     # 图像识别消息
+                #     self.robo_action(msg['x_match'], msg['y_match'], msg['delta'])
+                tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
+                x_match, y_match, delta = tennis_detect_service.detect_color(self._step)
+                self.robo_action(x_match, y_match, delta)
             except Exception as e:
                 logging.error(f"msg get exception = {e}")
-
-    def step_change(self):
-        if self._current_step == STEP_SHOT:
-            self._current_step = STEP_TENNIS
-        else:
-            self._current_step = STEP_SHOT
 
     def robo_action(self, x_match, y_match, delta):
         if not delta:
@@ -75,13 +66,16 @@ class RoboMasterControlService(threading.Thread):
             return False
 
         if x_match and y_match:
-            logging.info("可以抓取")
-            self._robotic_ctrl.close_gripper()
-            time.sleep(1)
-            self._robotic_ctrl.reset_arm()
-            self._is_gripper_close = True
+            if not self._is_gripper_close and self._step == Step.tennis.value:
+                logging.info("可以抓取")
+                self._robotic_ctrl.close_gripper()
+                time.sleep(1)
+                self._robotic_ctrl.reset_arm()
+                self._is_gripper_close = True
 
-            self.step_change()
+                self.step_change()
+            else:
+                logging.info("可以释放")
             return True
 
         if not x_match:

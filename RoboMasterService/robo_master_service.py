@@ -3,9 +3,9 @@ import time
 
 import cv2
 import logging
-# from robomaster import robot
+from robomaster import robot
 
-import global_var.robotic_ip
+from global_var.step_const import StepService
 from tennis_detect_service.tennis_detect import TennisDetectService
 
 
@@ -22,34 +22,23 @@ class RoboMasterService:
         self._last_msg_time = None
 
         try:
-            # 初始化日志文件
-            # robomaster.enable_logging_to_file()
-
             # 初始化
-            # self._robot = robot.Robot()
+            self._robot = robot.Robot()
 
             # 初始化相机
-            # self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
-            # self._camera = self._robot.camera
-
-            # 等待连接上robot
-            while True:
-                if not global_var.robotic_ip.robotic_host:
-                    continue
-
-                self._camera = cv2.VideoCapture(f'tcp://{global_var.robotic_ip.robotic_host}:40921')
-                assert self._camera.isOpened(), 'failed to connect to video stream'
-                self._camera.set(cv2.CAP_PROP_BUFFERSIZE, 4)
+            self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
+            self._camera = self._robot.camera
         except Exception as err:
             if self._camera:
                 self._camera.release()
+
+            self._robot.close()
             logging.error(f"exception: {err}")
 
-    def release_robot(self):
-        if self._camera:
-            self._camera.release()
-
+    @staticmethod
+    def release_robot():
         cv2.destroyAllWindows()
+        exit()
 
     def check_msg_send(self):
         current_time = round(time.time(), 1)
@@ -70,6 +59,7 @@ class RoboMasterService:
             return
 
         self._is_running = True
+        self._camera.start_video_stream(display=False)
         while True:
             if self._is_need_stop:
                 logging.info("capture is stopped!")
@@ -78,18 +68,18 @@ class RoboMasterService:
                 self.release_robot()
                 break
 
-            ok, img = self._camera.read()
-            if not ok:
-                break
-
+            img = self._camera.read_cv2_image(strategy='newest')
             if img is not None:
-                tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
-                x_match, y_match, delta = tennis_detect_service.detect_color()
+                # tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
+                # x_match, y_match, delta = tennis_detect_service.detect_color()
+                cv2.imshow("src", img)
                 if cv2.waitKey(1) == ord('q'):
                     break
 
                 if self.check_msg_send():
-                    self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
+                    # self._q.put({'x_match': x_match, 'y_match': y_match, 'delta': delta})
+                    # logging.info("send a img......")
+                    self._q.put(img)
 
         self.release_robot()
 

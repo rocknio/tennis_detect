@@ -95,17 +95,27 @@ class RoboMasterControlService(threading.Thread):
         self.step_change()
         self.reset_match()
 
-    def do_release(self):
-        self._robotic_ctrl.expand_arm(0, 1000)
-        time.sleep(0.5)
-        self._robotic_ctrl.move_y(0.2, duration=0.5)
-        time.sleep(0.5)
-        self._robotic_ctrl.expand_arm(300, 0)
-        time.sleep(0.5)
-        self._robotic_ctrl.open_gripper()
+    def do_release(self, mode):
+        if mode == 'bucket':
+            self._robotic_ctrl.expand_arm(0, 1000)
+            time.sleep(0.5)
+            self._robotic_ctrl.move_y(0.2, duration=0.5)
+            time.sleep(0.5)
+            self._robotic_ctrl.expand_arm(300, 0)
+            time.sleep(0.5)
+            self._robotic_ctrl.open_gripper()
+        else:
+            self._robotic_ctrl.expand_arm(1000, 0)
+            self._robotic_ctrl.open_gripper()
+
         self._is_gripper_close = False
         self.step_change()
         self.reset_match()
+
+        # 倒退，掉头
+        self._robotic_ctrl.move_y(-0.2, 0.5)
+        time.sleep(0.5)
+        self._robotic_ctrl.move_rotate(180, duration=1)
 
     def robo_action(self, x_match, y_match, delta):
         if not delta:
@@ -120,7 +130,7 @@ class RoboMasterControlService(threading.Thread):
                 self.do_cap()
             else:
                 logging.info("可以释放")
-                self.do_release()
+                self.do_release(self._cfg['release_mode'])
             return True
 
         if not x_match:
@@ -146,6 +156,6 @@ class RoboMasterControlService(threading.Thread):
                 if delta_y < 0:
                     return
 
-                self._robotic_ctrl.move_y(0.1, duration=0.1)
+                self._robotic_ctrl.move_y(0.1, duration=0.3)
         else:
             self._is_y_match = True

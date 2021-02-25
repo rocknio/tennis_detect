@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import threading
 import time
 from enum import Enum
 
@@ -17,6 +18,17 @@ class Colors(Enum):
     blue = (255, 0, 0)
 
 
+class DetectInfoRecv(threading.Thread):
+    def __init__(self, q, rb):
+        self._q = q
+        self._rb = rb
+
+    def run(self):
+        while True:
+            msg = self._q.get()
+            self._rb._detect_info = msg
+
+
 class RoboMasterService:
     def __init__(self, cfg, q):
         self._cfg = cfg
@@ -27,7 +39,7 @@ class RoboMasterService:
         self._camera = None
         self._robotic_conn = None
         self._robotic_ctrl = None
-        self._msg_interval = 0.5
+        self._msg_interval = self._cfg['msg_interval']
         self._last_msg_time = None
         self._detect_info = None
 
@@ -38,6 +50,9 @@ class RoboMasterService:
             # 初始化相机
             self._robot.initialize(conn_type='sta', sn=self._cfg['robot_master_sn'])
             self._camera = self._robot.camera
+
+            # 启动接收图像分析线程的分析结果线程
+            DetectInfoRecv(self._q, self).start()
         except Exception as err:
             if self._camera:
                 self._camera.release()
@@ -111,12 +126,12 @@ class RoboMasterService:
                 self.draw_detect_zone(img)
                 if self.check_msg_send():
                     self._q.put(img)
-                    while True:
-                        try:
-                            self._detect_info = self._detect_q.get(timeout=0.1)
-                            break
-                        except Exception:
-                            pass
+                    # while True:
+                    #     try:
+                    #         self._detect_info = self._detect_q.get(timeout=0.1)
+                    #         break
+                    #     except Exception:
+                    #         pass
 
                 if self._detect_info is not None:
                     c = self._detect_info['c']

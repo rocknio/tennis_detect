@@ -19,14 +19,14 @@ def init_logging():
     logger.setLevel(logging.INFO)
 
     sh = logging.StreamHandler()
-    file_log = logging.handlers.TimedRotatingFileHandler('run.log', 'MIDNIGHT', 1, 0)
+    # file_log = logging.handlers.TimedRotatingFileHandler('run.log', 'MIDNIGHT', 1, 0)
     formatter = logging.Formatter(
         '[%(asctime)s] [%(levelname)-7s] [%(module)s:%(filename)s-%(funcName)s-%(lineno)d] %(message)s')
     sh.setFormatter(formatter)
-    file_log.setFormatter(formatter)
+    # file_log.setFormatter(formatter)
 
     logger.addHandler(sh)
-    logger.addHandler(file_log)
+    # logger.addHandler(file_log)
 
     logging.info("Current log level is : %s", logging.getLevelName(logger.getEffectiveLevel()))
 
@@ -47,7 +47,9 @@ if __name__ == '__main__':
         'min_contour_area': settings.settings['min_contour_area'],
         'robot_master_sn': settings.settings['robot_master_sn'],
         'shot_hsv_low': [x * 255 for x in settings.settings['marker_range']['hsv_low']],
-        'shot_hsv_high': [x * 255 for x in settings.settings['marker_range']['hsv_high']]
+        'shot_hsv_high': [x * 255 for x in settings.settings['marker_range']['hsv_high']], 
+        'msg_interval': settings.settings['msg_interval'], 
+        'release_mode': settings.settings['release_mode']
     }
 
     # # 启动设置界面

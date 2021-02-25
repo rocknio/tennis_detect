@@ -36,3 +36,5 @@ limit_pixel:
   y: 30
 min_contour_area: 200
 robot_master_sn: 3JKDH2T001KK23
+msg_interval: 0.5
+release_mode: put_down

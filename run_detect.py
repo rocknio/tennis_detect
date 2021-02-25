@@ -49,7 +49,8 @@ if __name__ == '__main__':
         'shot_hsv_low': [x * 255 for x in settings.settings['marker_range']['hsv_low']],
         'shot_hsv_high': [x * 255 for x in settings.settings['marker_range']['hsv_high']], 
         'msg_interval': settings.settings['msg_interval'], 
-        'release_mode': settings.settings['release_mode']
+        'release_mode': settings.settings['release_mode'],
+        'run_mode': settings.settings['run_mode']
     }
 
     # # 启动设置界面

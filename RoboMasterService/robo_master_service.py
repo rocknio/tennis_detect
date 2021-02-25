@@ -19,13 +19,14 @@ class Colors(Enum):
 
 
 class DetectInfoRecv(threading.Thread):
-    def __init__(self, q, rb):
-        self._q = q
+    def __init__(self, rb):
+        super().__init__()
+        self._detect_q = detect_q
         self._rb = rb
 
     def run(self):
         while True:
-            msg = self._q.get()
+            msg = self._detect_q.get()
             self._rb._detect_info = msg
 
 
@@ -52,11 +53,8 @@ class RoboMasterService:
             self._camera = self._robot.camera
 
             # 启动接收图像分析线程的分析结果线程
-            DetectInfoRecv(self._q, self).start()
+            # DetectInfoRecv(self).start()
         except Exception as err:
-            if self._camera:
-                self._camera.release()
-
             self._robot.close()
             logging.error(f"exception: {err}")
 
@@ -72,7 +70,7 @@ class RoboMasterService:
             self._last_msg_time = current_time
             return True
 
-        if current_time - self._last_msg_time > self._msg_interval:
+        if current_time - self._last_msg_time >= self._msg_interval:
             self._last_msg_time = current_time
             return True
         else:
@@ -126,12 +124,12 @@ class RoboMasterService:
                 self.draw_detect_zone(img)
                 if self.check_msg_send():
                     self._q.put(img)
-                    # while True:
-                    #     try:
-                    #         self._detect_info = self._detect_q.get(timeout=0.1)
-                    #         break
-                    #     except Exception:
-                    #         pass
+                    while True:
+                        try:
+                            self._detect_info = self._detect_q.get(timeout=0.1)
+                            break
+                        except Exception:
+                            pass
 
                 if self._detect_info is not None:
                     c = self._detect_info['c']
@@ -166,11 +164,13 @@ class RoboMasterService:
                 cv2.imshow("vision", img)
 
                 if cv2.waitKey(1) == ord('q'):
-                    break
+                    self.stop_capture()
 
         self.release_robot()
 
     def stop_capture(self):
+        self._q.put('q')
+
         if not self._is_running:
             logging.error("capture is not running")
             return

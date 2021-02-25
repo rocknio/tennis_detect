@@ -34,7 +34,8 @@ detect_zone:
 limit_pixel:
   x: 30
   y: 30
-min_contour_area: 200
+min_contour_area: 50
 robot_master_sn: 3JKDH2T001KK23
-msg_interval: 0.5
+msg_interval: 0.3
 release_mode: put_down
+run_mode: continue

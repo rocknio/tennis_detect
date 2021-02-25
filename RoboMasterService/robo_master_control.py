@@ -65,14 +65,20 @@ class RoboMasterControlService(threading.Thread):
             try:
                 img = self._q.get()
 
+                if isinstance(img, str):
+                    break
+
                 tennis_detect_service = TennisDetectService(self._cfg, cap_frame=img)
                 x_match, y_match, delta, c = tennis_detect_service.detect_color(self._step)
 
                 # if x_match and y_match:
                 #     self.do_release()
 
-                if self.robo_action(x_match, y_match, delta) and self._step == Step.tennis.value:
-                    break
+                if self._cfg['run_mode'] == 'once':
+                    if self.robo_action(x_match, y_match, delta) and self._step == Step.tennis.value:
+                        break
+                else:
+                    self.robo_action(x_match, y_match, delta)
 
                 self._detect_q.put({
                     'x_match': x_match,
@@ -106,14 +112,16 @@ class RoboMasterControlService(threading.Thread):
             self._robotic_ctrl.open_gripper()
         else:
             self._robotic_ctrl.expand_arm(1000, 0)
+            time.sleep(0.5)
             self._robotic_ctrl.open_gripper()
+            time.sleep(0.5)
 
         self._is_gripper_close = False
         self.step_change()
         self.reset_match()
 
         # 倒退，掉头
-        self._robotic_ctrl.move_y(-0.2, 0.5)
+        self._robotic_ctrl.move_y(-0.3, 0.5)
         time.sleep(0.5)
         self._robotic_ctrl.move_rotate(180, duration=1)
 
@@ -143,7 +151,7 @@ class RoboMasterControlService(threading.Thread):
                     direction = -1
                 else:
                     direction = 1
-                self._robotic_ctrl.move_rotate(10, direction=direction, duration=0.5)
+                self._robotic_ctrl.move_rotate(10, direction=direction, duration=0.3)
         else:
             self._is_x_match = True
 

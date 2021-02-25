@@ -27,9 +27,3 @@ exe = EXE(pyz,
           upx=True,
           console=False,
           icon='tennis.ico')
-
-coll = COLLECT(
-              [('config.yaml','config.yaml','DATA')],
-              strip=None,
-              upx=True,
-              name='')

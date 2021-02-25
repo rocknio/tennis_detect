@@ -33,3 +33,5 @@ run_mp.py
 /models.py
 Pipfile.lock
 *.txt
+*.log
+*.log.*

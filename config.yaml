@@ -1,0 +1,41 @@
+color_range:
+  low:
+    red: 60
+    green: 100
+    blue: 0
+  high:
+    red: 255
+    green: 255
+    blue: 95
+  hsv_low:
+    - 0.1137
+    - 0.3529
+    - 0.3529
+  hsv_high:
+    - 0.2009
+    - 1
+    - 1
+marker_range:
+  hsv_low:
+    - 0
+    - 0.26
+    - 0.22
+  hsv_high:
+    - 0
+    - 1
+    - 1
+detect_zone:
+  down_right:
+    x: 1000
+    y: 700
+  top_left:
+    x: 300
+    y: 360
+limit_pixel:
+  x: 30
+  y: 30
+min_contour_area: 50
+robot_master_sn: 3JKDH2T001KK23
+msg_interval: 0.3
+release_mode: put_down
+run_mode: continue

@@ -1,15 +1,17 @@
 [[source]]
-name = "清华"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple/"
+name = "pypi"
+url = "https://pypi.org/simple"
 verify_ssl = true
 
 [dev-packages]
+cyberbrain = "*"
 
 [packages]
 opencv-python = "*"
 opencv-contrib-python = "*"
 numpy = "*"
 robomaster = "*"
+pyyaml = "*"
 
 [requires]
 python_version = "3.8"

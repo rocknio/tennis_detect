@@ -1,18 +1,21 @@
 # -*- coding: utf-8 -*-
+from typing import List, Tuple
+
 import cv2
 import logging
 import numpy as np
 from enum import Enum
 
 
-class DetectShape(Enum):
-    circle = "CIRCLE"
-    rect = "RECT"
-    triangle = "TRIANGLE"
+class Colors(Enum):
+    red = (0, 0, 255)
+    green = (0, 255, 0)
+    blue = (255, 0, 0)
 
 
 class TennisDetectService(object):
-    def __init__(self, color_boundaries, img_path=None, cap_frame=None):
+    def __init__(self, config, img_path=None, cap_frame=None):
+        self._cfg = config
         self._image_path = img_path
         if self._image_path is not None:
             self._output_path = '.' + self._image_path.split('.')[1] + '_out.' + self._image_path.split('.')[2]
@@ -26,95 +29,145 @@ class TennisDetectService(object):
         elif cap_frame is not None:
             self._image = cap_frame
 
-        self._color_boundaries = color_boundaries
+    def is_x_match(self, detect_center, dst_center):
+        detect_x = detect_center[0]
+        dst_x = dst_center[1]
+        diff = abs(dst_x - detect_x)
+        return diff <= self._cfg['limit_pixel']['x'], dst_x - detect_x
+
+    def is_y_match(self, detect_center, dst_center):
+        detect_y = detect_center[1]
+        dst_y = dst_center[0]
+        diff = abs(dst_y - detect_y)
+        return diff <= self._cfg['limit_pixel']['y'], dst_y - detect_y
+
+    def is_match(self, detect_center, dst_center):
+        x_match, delta_x = self.is_x_match(detect_center, dst_center)
+        y_match, delta_y = self.is_y_match(detect_center, dst_center)
+        return x_match, y_match, (delta_x, delta_y)
+
+    def marker_is_match(self, detect_center, dst_center):
+        _, _, delta = self.is_match(detect_center, dst_center)
+        x_match = 80 > abs(abs(delta[0]) - 100)
+        y_match = 50 > abs(abs(delta[1]) - 200)
+        return x_match, y_match, delta
 
     @staticmethod
-    def find_max_contours(contours):
-        max_contour = None
-        for c in contours:
-            if cv2.contourArea(c) <= 50:
-                continue
+    def contour_analysis(cnt) -> Tuple[int, int]:
+        approx = cv2.approxPolyDP(cnt, 0.01 * cv2.arcLength(cnt, True), True)
+        area = cv2.contourArea(cnt)
+        return len(approx), area
 
-            if max_contour is None:
-                max_contour = c
-            else:
-                if cv2.contourArea(c) > cv2.contourArea(max_contour):
-                    max_contour = c
+    def biggest_circle_cnt(self, cnts: List):
+        found_cnt = None
+        found_area = 0
 
-        return max_contour
+        for cnt in cnts:
+            edges, area = self.contour_analysis(cnt)
+            if edges > 10 \
+                    and self._cfg['min_contour_area'] < area \
+                    and area > found_area:
+                found_area = area
+                found_cnt = cnt
 
-    def get_direction(self, dst_center):
-        image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
+        return found_cnt
 
-        ret = []
-        if image_center[0] < dst_center[0]:
-            ret.append('left|{}'.format(image_center[0] - dst_center[0]))
-        elif image_center[0] > dst_center[0]:
-            ret.append('right|{}'.format(image_center[0] - dst_center[0]))
-        else:
-            ret.append(None)
+    def draw_detect_zone(self):
+        # 画出探测区域中心点
+        detect_zone_center = (self._cfg['detect_zone']['down_right']['y']
+                              - (self._cfg['detect_zone']['down_right']['y']
+                                 - self._cfg['detect_zone']['top_left']['y']) // 2 // 2,
 
-        if image_center[1] < dst_center[1]:
-            ret.append('up|{}'.format(image_center[1] - dst_center[1]))
-        elif image_center[1] > dst_center[1]:
-            ret.append('down|{}'.format(image_center[1] - dst_center[1]))
-        else:
-            ret.append(None)
+                              self._cfg['detect_zone']['top_left']['x']
+                              + (self._cfg['detect_zone']['down_right']['x']
+                                 - self._cfg['detect_zone']['top_left']['x']) // 2,)
 
-        print(ret)
-        return ret
-
-    @staticmethod
-    def detect_shape(contour):
-        if contour is None:
-            return
-
-        # 轮廓逼近
-        epsilon = 0.01 * cv2.arcLength(contour, True)
-        approx = cv2.approxPolyDP(contour, epsilon, True)
-
-        # 分析形状
-        corners = len(approx)
-        shape = ""
-        if corners == 3:
-            shape = DetectShape.triangle.value
-        elif corners == 4:
-            shape = DetectShape.rect.value
-        elif corners > 10:
-            shape = DetectShape.circle.value
-
-        return shape
-
-    def detect_color(self):
-        if self._image is None:
-            return None
-
-        # cv2.imshow("original", self._image)
-        lower = np.array(self._color_boundaries[0])
-        upper = np.array(self._color_boundaries[1])
-
-        mask = cv2.inRange(self._image, lower, upper)
-        res = cv2.bitwise_and(self._image, self._image, mask=mask)
-
-        contours, _ = cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-        c = self.find_max_contours(contours)
-        shape = self.detect_shape(c)
-        x, y, w, h = cv2.boundingRect(c)
-        cv2.rectangle(res, (x, y), (x + w, y + h), (0, 0, 255), 2)
-        center = (x + w // 2, y + h // 2)
-        cv2.rectangle(res, (center[0], center[1]), (center[0] + 2, center[1] + 2), (0, 0, 255), 2)
-        self.get_direction(center)
-
-        image_center = (self._image.shape[0] // 2, self._image.shape[1] // 2)
-        cv2.rectangle(res,
-                      (image_center[1], image_center[0]),
-                      (image_center[1] + 5, image_center[0] + 5),
-                      (0, 0, 255),
+        cv2.rectangle(self._image,
+                      (detect_zone_center[1], detect_zone_center[0]),
+                      (detect_zone_center[1] + self._cfg['limit_pixel']['x'] // 2,
+                       detect_zone_center[0] + self._cfg['limit_pixel']['y'] // 2),
+                      (0, 255, 0),
                       2)
 
-        cv2.putText(res,
-                    shape,
-                    center,
-                    cv2.FONT_HERSHEY_PLAIN, 2.0, (255, 0, 0), 1)
+        # 划线重点探测区域
+        cv2.rectangle(self._image,
+                      (self._cfg['detect_zone']['top_left']['x'], self._cfg['detect_zone']['top_left']['y']),
+                      (self._cfg['detect_zone']['down_right']['x'], self._cfg['detect_zone']['down_right']['y']),
+                      (0, 255, 0), 2)
 
-        cv2.imshow("result", res)
+        return detect_zone_center
+
+    def detect_color(self, step, hsv=True):
+        if self._image is None:
+            return None, None, None, None
+
+        delta = None
+        x_match, y_match = False, False
+
+        detect_zone_center = self.draw_detect_zone()
+
+        if step == 1:
+            if hsv:
+                processed = cv2.GaussianBlur(self._image, (11, 11), 0)
+                processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
+
+                lower = tuple(self._cfg['hsv_low'])
+                upper = tuple(self._cfg['hsv_high'])
+                mask = cv2.inRange(processed, lower, upper)
+                mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
+                cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+                c = self.biggest_circle_cnt(cnts)
+            else:
+                lower = np.array([self._cfg['low_color']['blue'],
+                                  self._cfg['low_color']['red'],
+                                  self._cfg['low_color']['green']])
+                upper = np.array([self._cfg['high_color']['blue'],
+                                  self._cfg['high_color']['red'],
+                                  self._cfg['high_color']['green']])
+
+                mask = cv2.inRange(self._image, lower, upper)
+
+                contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)  # cv2.findContours(mask, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                c = self.biggest_circle_cnt(contours)
+        else:
+            processed = cv2.GaussianBlur(self._image, (11, 11), 0)
+            processed = cv2.cvtColor(processed, cv2.COLOR_BGR2HSV)
+
+            lower = tuple(self._cfg['shot_hsv_low'])
+            upper = tuple(self._cfg['shot_hsv_high'])
+            mask = cv2.inRange(processed, lower, upper)
+            mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, None)
+            cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+            c = self.biggest_circle_cnt(cnts)
+
+        if c is not None:
+            # 画出被探测物体区域及中心点
+            x, y, w, h = cv2.boundingRect(c)
+            center = (x + w // 2, y + h // 2)
+
+            if step == 1:
+                x_match, y_match, delta = self.is_match(center, detect_zone_center)
+            else:
+                x_match, y_match, delta = self.marker_is_match(center, detect_zone_center)
+
+            if x_match and y_match:
+                center_color = Colors.green.value
+            else:
+                center_color = Colors.red.value
+
+            if step == 2:
+                cv2.rectangle(self._image, (x, y), (x + w, y + h), center_color, 2)
+                cv2.rectangle(self._image, (center[0], center[1]), (center[0] + 2, center[1] + 2), center_color, 2)
+            else:
+                (x, y), pixel_radius = cv2.minEnclosingCircle(c)
+                cv2.circle(self._image, (int(x), int(y)), int(pixel_radius), center_color, 2)
+                cv2.circle(self._image, (int(x), int(y)), 1, center_color, 2)
+
+            # 返回值打印在图像上
+            text = f'x_match = {x_match} and y_match = {y_match}, delta = {delta}'
+            cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
+
+        # cv2.imshow("result", self._image)
+        return x_match, y_match, delta, c

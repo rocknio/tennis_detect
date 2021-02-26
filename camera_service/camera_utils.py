@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
 import cv2
 import logging
+
+from config_util.settings import SettingService
 from tennis_detect_service.tennis_detect import TennisDetectService
-from settings import low_color, high_color
 
 
 class CameraService:
-    def __init__(self, channel):
+    def __init__(self, channel, cfg):
+        self._cfg = cfg
         self._channel = channel
         self._is_need_stop = False
         self._is_running = False
@@ -25,6 +27,7 @@ class CameraService:
             return
 
         self._is_running = True
+        tennis_detect_service = TennisDetectService(config=self._cfg)
         while True:
             if self._is_need_stop:
                 logging.info("capture is stopped!")
@@ -37,12 +40,13 @@ class CameraService:
                 logging.error("capture read failed")
                 break
             else:
-                tennis_detect_service = TennisDetectService((low_color, high_color), cap_frame=frame)
-                tennis_detect_service.detect_color()
+
+                _, _, _ = tennis_detect_service.detect_color(frame, 2)
                 if cv2.waitKey(1) == ord('q'):
                     break
 
         cv2.destroyAllWindows()
+        exit()
 
     def stop_capture(self):
         if not self._is_running:

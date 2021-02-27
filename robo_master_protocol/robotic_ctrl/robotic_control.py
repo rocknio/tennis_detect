@@ -28,8 +28,8 @@ class RoboticController:
         if duration:
             time.sleep(duration)
 
-        if action:
-            action()
+            if action:
+                action()
 
     def move_x(self, speed, duration=None):
         if self._chassis:

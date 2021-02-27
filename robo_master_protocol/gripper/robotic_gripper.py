@@ -11,7 +11,7 @@ class RoboticGripper:
 
     def gripper_status(self):
         """
-        robot返回status始终未0，不要使用该方法
+        robot返回status始终为0，不要使用该方法
         :return:
         """
         ret = self._robot_ctrl.robot_do_command('robotic_gripper status ?')

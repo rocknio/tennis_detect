@@ -169,5 +169,4 @@ class TennisDetectService(object):
             text = f'x_match = {x_match} and y_match = {y_match}, delta = {delta}'
             cv2.putText(self._image, text, (40, 50), cv2.FONT_HERSHEY_PLAIN, 2.0, center_color, 2)
 
-        # cv2.imshow("result", self._image)
         return x_match, y_match, delta, c
